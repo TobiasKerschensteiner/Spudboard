@@ -3,22 +3,22 @@
 #include <WiFi.h>
 
 // Replace with your network credentials
-const char* ssid = "Alpakhan";
-const char* password = "Bananenmus";
+const char* ssid = "WLAN";
+const char* password = "Password";
 
 // Set web server port number to 80
 WiFiServer server(80);
 
 // ULN2003 Motor Driver Pins
-#define IN1 19
-#define IN2 18
-#define IN3 5
-#define IN4 17
+#define IN1 18
+#define IN2 5
+#define IN3 17
+#define IN4 16
 
-#define IN5 13
-#define IN6 12
-#define IN7 4
-#define IN8 11 
+#define IN5 26
+#define IN6 27
+#define IN7 14
+#define IN8 13 
 
 // Define the number of steps per revolution
 const int stepsPerRevolution = 2048; // Change this to fit the number of steps per revolution
@@ -122,8 +122,8 @@ void setup() {
   server.begin();
 
   // Set the initial speed of the motors
-  myStepper.setSpeed(0);
-  myStepper2.setSpeed(0);
+  myStepper.setSpeed(1);
+  myStepper2.setSpeed(1);
 }
 
 void loop() {
