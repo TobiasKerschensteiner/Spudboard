@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <Stepper.h>
 #include <WiFi.h>
+#include <AccelStepper.h>
 
 // Replace with your network credentials
 const char* ssid = "WLAN";
@@ -9,7 +9,7 @@ const char* password = "Password";
 // Set web server port number to 80
 WiFiServer server(80);
 
-// ULN2003 Motor Driver Pins
+// Motor Driver Pins
 #define IN1 18
 #define IN2 5
 #define IN3 17
@@ -18,18 +18,18 @@ WiFiServer server(80);
 #define IN5 26
 #define IN6 27
 #define IN7 14
-#define IN8 13 
+#define IN8 13
 
 // Define the number of steps per revolution
-const int stepsPerRevolution = 2048; // Change this to fit the number of steps per revolution
+const int stepsPerRevolution = 2048;
 
 // Initialize the stepper library
-Stepper myStepper(stepsPerRevolution, IN1, IN3, IN2, IN4);
-Stepper myStepper2(stepsPerRevolution, IN5, IN6, IN7, IN8);
+AccelStepper stepper1(AccelStepper::FULL4WIRE, IN1, IN2, IN3, IN4);
+AccelStepper stepper2(AccelStepper::FULL4WIRE, IN5, IN6, IN7, IN8);
 
 // Motor speeds for forward and backward movement
-int motorSpeedForward = 100; // Adjust as needed
-int motorSpeedBackward = -100; // Adjust as needed
+const int motorSpeedForward = 1000; // Adjust as needed
+const int motorSpeedBackward = -1000; // Adjust as needed
 
 // HTML page as a C++ string
 const char* htmlPage = R"=====(
@@ -101,7 +101,6 @@ const char* htmlPage = R"=====(
 </html>
 )=====";
 
-
 void setup() {
   Serial.begin(9600);
 
@@ -121,9 +120,11 @@ void setup() {
   Serial.println(WiFi.localIP());
   server.begin();
 
-  // Set the initial speed of the motors
-  myStepper.setSpeed(1);
-  myStepper2.setSpeed(1);
+  // Set the initial speed and acceleration of the motors
+  stepper1.setMaxSpeed(1000); // Adjust as needed
+  stepper2.setMaxSpeed(1000); // Adjust as needed
+  stepper1.setAcceleration(1000); // Adjust as needed
+  stepper2.setAcceleration(1000); // Adjust as needed
 }
 
 void loop() {
@@ -148,24 +149,24 @@ void loop() {
 
             if (currentLine.indexOf("Forward") != -1) {
               Serial.println("Forward");
-              myStepper.setSpeed(motorSpeedForward);
-              myStepper2.setSpeed(motorSpeedForward);
+              stepper1.setSpeed(motorSpeedForward);
+              stepper2.setSpeed(motorSpeedForward);
             } else if (currentLine.indexOf("Backward") != -1) {
               Serial.println("Backward");
-              myStepper.setSpeed(motorSpeedBackward);
-              myStepper2.setSpeed(motorSpeedBackward);
+              stepper1.setSpeed(motorSpeedBackward);
+              stepper2.setSpeed(motorSpeedBackward);
             } else if (currentLine.indexOf("Left") != -1) {
               Serial.println("Left");
-              myStepper.setSpeed(motorSpeedBackward);
-              myStepper2.setSpeed(motorSpeedForward);
+              stepper1.setSpeed(motorSpeedBackward);
+              stepper2.setSpeed(motorSpeedForward);
             } else if (currentLine.indexOf("Right") != -1) {
               Serial.println("Right");
-              myStepper.setSpeed(motorSpeedForward);
-              myStepper2.setSpeed(motorSpeedBackward);
+              stepper1.setSpeed(motorSpeedForward);
+              stepper2.setSpeed(motorSpeedBackward);
             } else if (currentLine.indexOf("Stop") != -1) {
               Serial.println("Stop");
-              myStepper.setSpeed(0);
-              myStepper2.setSpeed(0);
+              stepper1.setSpeed(0);
+              stepper2.setSpeed(0);
             }
 
             break;
