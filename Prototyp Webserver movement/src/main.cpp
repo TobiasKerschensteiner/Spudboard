@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <AccelStepper.h>
+#include <AsyncTCP.h>
 
 // Replace with your network credentials
-const char* ssid = "WLAN";
-const char* password = "Password";
+const char* ssid = "Alpakhan";
+const char* password = "Bananenmus";
 
 // Set web server port number to 80
 WiFiServer server(80);
@@ -27,7 +28,7 @@ const int stepsPerRevolution = 2048;
 AccelStepper stepper1(AccelStepper::FULL4WIRE, IN1, IN2, IN3, IN4);
 AccelStepper stepper2(AccelStepper::FULL4WIRE, IN5, IN6, IN7, IN8);
 
-// Motor speeds for forward and backward movement
+// Motor speeds for Forward and Backward movement
 const int motorSpeedForward = 1000; // Adjust as needed
 const int motorSpeedBackward = -1000; // Adjust as needed
 
@@ -35,69 +36,55 @@ const int motorSpeedBackward = -1000; // Adjust as needed
 const char* htmlPage = R"=====(
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <title>ESP32-CAM Robot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:,">
     <style>
-        html {
-            font-family: Helvetica;
-            display: inline-block;
-            margin: 0px auto;
-            text-align: center;
-        }
-        .button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 16px 40px;
-            text-decoration: none;
-            font-size: 30px;
-            margin: 2px;
-            cursor: pointer;
-        }
-        .button2 {
-            background-color: #555555;
-        }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-            height: 300px;
-        }
-        .arrow-button {
-            background-color: #3498db;
-            border: none;
-            color: white;
-            padding: 16px 40px;
-            text-decoration: none;
-            font-size: 30px;
-            margin: 2px;
-            cursor: pointer;
-        }
+      body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
+      table { margin-Left: auto; margin-Right: auto; }
+      td { padding: 8 px; }
+      .button {
+        background-color: #2f4468;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 18px;
+        margin: 6px 3px;
+        cursor: pointer;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+      }
+      img {  width: auto ;
+        max-width: 100% ;
+        height: auto ; 
+      }
     </style>
-</head>
-<body>
-    <h1>Remote Control Car</h1>
-    <div class="controls">
-        <a href="/Forward"><button class="arrow-button" style="grid-column: 2; grid-row: 1;" onclick="sendCommand('/Forward');">&#8593;</button></a>
-        <a href="/Left"><button class="arrow-button" style="grid-column: 1; grid-row: 2;" onclick="sendCommand('/Left');">&#8592;</button></a>
-        <a href="/Right"><button class="arrow-button" style="grid-column: 3; grid-row: 2;" onclick="sendCommand('/Right');">&#8594;</button></a>
-        <a href="/Stop"><button class="arrow-button" style="grid-column: 2; grid-row: 2; background-color: #e74c3c;" onclick="sendCommand('/Stop');">■</button></a>
-        <a href="/Backward"><button class="arrow-button" style="grid-column: 2; grid-row: 3;" onclick="sendCommand('/Backward');">&#8595;</button></a>
-    </div>
-
-    <script>
-        function sendCommand(command) {
-            // Send an HTTP request to the ESP32 with the selected command
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", command, true);
-            xhr.send();
-        }
-    </script>
-</body>
+  </head>
+  <body>
+    <h1>Wischbot</h1>
+    <img src="" id="photo" >
+    <table>
+      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('Forward');" ontouchstart="toggleCheckbox('Forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forward</button></td></tr>
+      <tr><td align="center"><button class="button" onmousedown="toggleCheckbox('Left');" ontouchstart="toggleCheckbox('Left');" onmouseup="toggleCheckbox('Stop');" ontouchend="toggleCheckbox('stop');">Left</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('Right');" ontouchstart="toggleCheckbox('Right');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Right</button></td></tr>
+      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('Backward');" ontouchstart="toggleCheckbox('Backward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Backward</button></td></tr>                   
+    </table>
+   <script>
+   function toggleCheckbox(x) {
+     var xhr = new XMLHttpRequest();
+     xhr.open("GET", "/action?go=" + x, true);
+     xhr.send();
+   }
+   window.onload = document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
+  </script>
+  </body>
 </html>
 )=====";
 
