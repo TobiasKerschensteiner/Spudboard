@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Stepper.h>
 
+/* 
 //einzeln youtube video (https://www.youtube.com/watch?v=20lSgKkJVXQ)
 #define Step 7
 #define Dir 6
@@ -31,7 +32,7 @@ void loop()
     digitalWrite(Step, LOW);
     delayMicroseconds(30);
 }
-
+*/
 
 //oder beispiel internet (https://funduino.de/nr-15-schrittmotor)
 
@@ -50,7 +51,7 @@ Motor.step(-2038); // Der Motor macht durch das Minuszeichen 2048 Schritte in di
 delay(1000); 
 }
 
-
+/*
 //freestyle
 
 // Motoren definieren
@@ -125,3 +126,4 @@ void loop()
     Right(); //Roboter dreht sich
     delay(500); //Dauer für die Krümmung
 }
+*/
