@@ -5,8 +5,8 @@
 #include <MultiStepper.h>
 
 // Replace with your network credentials
-const char* ssid = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
+const char* ssid = "Alpakhan";
+const char* password = "Bananenmus";
 
 // Set web server port number to 80
 WiFiServer server(80);
@@ -20,7 +20,6 @@ String backwardsState = "off";
 String leftState = "off";
 String rightState = "off";
 String stopState = "off"; 
-
 
 
 // Motor Driver Pins
@@ -133,52 +132,52 @@ void loop(){
             
             // turns the GPIOs on and off
             //if (header.indexOf("GET /26/on") >= 0) {
-            if (header.indexOf("GET Forwards on")>=0){    
+            if (header.indexOf("GET /1/ on")>=0){    
                 //Serial.println("GPIO 26 on");
                 Serial.println("Forwards on");
                 forwardState = "on";
                 stopState = "off";
-                moveForward;
-            } else if (header.indexOf("GET Forwards off") >= 0) {
+                moveForward();
+            } else if (header.indexOf("GET /1/ off") >= 0) {
               //Serial.println("GPIO 26 off");
               Serial.println("Forwards off");
               forwardState = "off";
               stopState = "on";
-              stopMotors;
+              stopMotors();
             //} else if (header.indexOf("GET /27/on") >= 0) {
-            } else if (header.indexOf("GET Backwards on")>=0){
+            } else if (header.indexOf("GET /2/ on")>=0){
               //Serial.println("GPIO 27 on");
               Serial.println("Backwards on");
               backwardsState = "on";
               stopState = "off";
-              moveBackward;
+              moveBackward();
             //} else if (header.indexOf("GET /27/off") >= 0) {
-            } else if (header.indexOf("GET Backwards off")>=0){
+            } else if (header.indexOf("GET /2/ off")>=0){
               //Serial.println("GPIO 27 off");
               Serial.println("Backwards off");
               backwardsState = "off";
               stopState = "on";
-              stopMotors;
-            } else if (header.indexOf("GET Left on")>=0){
+              stopMotors();
+            } else if (header.indexOf("GET /3/ on")>=0){
                 Serial.println("Left on");
                 leftState = "on";
                 stopState = "off";
-                turnLeft;
-            } else if (header.indexOf("GET Left off")>=0){
+                turnLeft();
+            } else if (header.indexOf("GET /3/ off")>=0){
                 Serial.println("Left off");
                 leftState = "off";
                 stopState = "on";
-                stopMotors;
-            } else if (header.indexOf("GET Right on")>=0){
+                stopMotors();
+            } else if (header.indexOf("GET /4/ on")>=0){
                 Serial.println("Right on");
                 rightState = "on";
                 stopState = "off";
-                turnRight;
-            } else if (header.indexOf("GET Right off")>=0){
+                turnRight();
+            } else if (header.indexOf("GET /4/ off")>=0){
                 Serial.println("Right off");
                 rightState = "off";
                 stopState = "on";
-                stopMotors;
+                stopMotors();
 
             }    
             }
@@ -244,7 +243,9 @@ void loop(){
           } else { // if you got a newline, then clear currentLine
             currentLine = "";
           }
-        } else if (c != '\r') {  // if you got anything else but a carriage return character,
+
+   //     } else if (c != '\r') {  // if you got anything else but a carriage return character,
+
           currentLine += c;      // add it to the end of the currentLine
         }
       }
