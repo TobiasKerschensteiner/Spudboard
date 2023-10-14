@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <AccelStepper.h>
-#include <AsyncTCP.h>
 
 // Replace with your network credentials
 const char* ssid = "Alpakhan";
