@@ -100,42 +100,42 @@ void loop() {
             client.println("Connection: close");
             client.println();
 
-            if (header.indexOf("GET /1/on") >= 0) {
+            if (header.indexOf("/1/on") >= 0) {
               Serial.println("Forwards on");
               forwardState = "on";
               stopState = "off";
               moveForward();
-            } else if (header.indexOf("GET /1/off") >= 0) {
+            } else if (header.indexOf("/1/off") >= 0) {
               Serial.println("Forwards off");
               forwardState = "off";
               stopState = "on";
               stopMotors();
-            } else if (header.indexOf("GET /2/on") >= 0) {
+            } else if (header.indexOf("/2/on") >= 0) {
               Serial.println("Backwards on");
               backwardsState = "on";
               stopState = "off";
               moveBackward();
-            } else if (header.indexOf("GET /2/off") >= 0) {
+            } else if (header.indexOf("/2/off") >= 0) {
               Serial.println("Backwards off");
               backwardsState = "off";
               stopState = "on";
               stopMotors();
-            } else if (header.indexOf("GET /3/on") >= 0) {
+            } else if (header.indexOf("/3/on") >= 0) {
               Serial.println("Left on");
               leftState = "on";
               stopState = "off";
               turnLeft();
-            } else if (header.indexOf("GET /3/off") >= 0) {
+            } else if (header.indexOf("/3/off") >= 0) {
               Serial.println("Left off");
               leftState = "off";
               stopState = "on";
               stopMotors();
-            } else if (header.indexOf("GET /4/on") >= 0) {
+            } else if (header.indexOf("/4/on") >= 0) {
               Serial.println("Right on");
               rightState = "on";
               stopState = "off";
               turnRight();
-            } else if (header.indexOf("GET /4/off") >= 0) {
+            } else if (header.indexOf("/4/off") >= 0) {
               Serial.println("Right off");
               rightState = "off";
               stopState = "on";
@@ -146,33 +146,37 @@ void loop() {
             response += "<body><h1>PotatoWeb</h1>";
             response += "<p>Forward - State " + forwardState + "</p>";
 
-            if (forwardState == "off") {
+            if (backwardsState == "off" && forwardState == "off" && leftState == "off" && rightState == "off") {
+
               response += "<p><a href=\"/1/on\"><button class=\"button\">ON</button></a></p>";
-            } else {
+            } else if (forwardState == "on") {
               response += "<p><a href=\"/1/off\"><button class=\"button button2\">OFF</button></a></p>";
             }
 
             response += "<p>Backwards - State " + backwardsState + "</p>";
 
-            if (backwardsState == "off") {
+            if (backwardsState == "off" && forwardState == "off" && leftState == "off" && rightState == "off") {
+
               response += "<p><a href=\"/2/on\"><button class=\"button\">ON</button></a></p>";
-            } else {
+            } else if(backwardsState == "on") {
               response += "<p><a href=\"/2/off\"><button class=\"button button2\">OFF</button></a></p>";
             }
 
             response += "<p>Left - State " + leftState + "</p>";
 
-            if (leftState == "off") {
+            if (backwardsState == "off" && forwardState == "off" && leftState == "off" && rightState == "off") {
+
               response += "<p><a href=\"/3/on\"><button class=\"button\">ON</button></a></p>";
-            } else {
+            } else if(leftState == "on") {
               response += "<p><a href=\"/3/off\"><button class=\"button button2\">OFF</button></a></p>";
             }
 
             response += "<p>Right - State " + rightState + "</p>";
 
-            if (rightState == "off") {
+            if (backwardsState == "off" && forwardState == "off" && leftState == "off" && rightState == "off") {
+
               response += "<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>";
-            } else {
+            } else if(rightState == "on") {
               response += "<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>";
             }
 
