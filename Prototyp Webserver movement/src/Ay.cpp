@@ -134,21 +134,27 @@ void loop() {
               rightState = "off";
               stopState = "on";
             }
-            if (forwardState == "on"){
+
+            while (forwardState == "on"){
               moveForward();
-            } 
-            if (backwardsState == "on"){
+            }
+
+            while (backwardsState == "on"){
               moveBackward();
             }
-            if (leftState == "on"){
+
+            while (leftState == "on"){
               turnLeft();
             }
-            if (rightState == "on"){
+
+            while (rightState == "on"){
               turnRight();
             }
-            if (stopState == "on"){
+            
+            while (stopState == "on"){
               stopMotors();
             }
+
             String response = htmlTemplate;
             response += "<body><h1>PotatoWeb</h1>";
             response += "<p>Forward - State " + forwardState + "</p>";
