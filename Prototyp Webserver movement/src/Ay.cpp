@@ -104,44 +104,51 @@ void loop() {
               Serial.println("Forwards on");
               forwardState = "on";
               stopState = "off";
-              moveForward();
+              
             } else if (header.indexOf("/1/off") >= 0) {
               Serial.println("Forwards off");
               forwardState = "off";
               stopState = "on";
-              stopMotors();
             } else if (header.indexOf("/2/on") >= 0) {
               Serial.println("Backwards on");
               backwardsState = "on";
               stopState = "off";
-              moveBackward();
             } else if (header.indexOf("/2/off") >= 0) {
               Serial.println("Backwards off");
               backwardsState = "off";
               stopState = "on";
-              stopMotors();
             } else if (header.indexOf("/3/on") >= 0) {
               Serial.println("Left on");
               leftState = "on";
               stopState = "off";
-              turnLeft();
             } else if (header.indexOf("/3/off") >= 0) {
               Serial.println("Left off");
               leftState = "off";
               stopState = "on";
-              stopMotors();
             } else if (header.indexOf("/4/on") >= 0) {
               Serial.println("Right on");
               rightState = "on";
               stopState = "off";
-              turnRight();
             } else if (header.indexOf("/4/off") >= 0) {
               Serial.println("Right off");
               rightState = "off";
               stopState = "on";
+            }
+            if (forwardState == "on"){
+              moveForward();
+            } 
+            if (backwardsState == "on"){
+              moveBackward();
+            }
+            if (leftState == "on"){
+              turnLeft();
+            }
+            if (rightState == "on"){
+              turnRight();
+            }
+            if (stopState == "on"){
               stopMotors();
             }
-
             String response = htmlTemplate;
             response += "<body><h1>PotatoWeb</h1>";
             response += "<p>Forward - State " + forwardState + "</p>";
