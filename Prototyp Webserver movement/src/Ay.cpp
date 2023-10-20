@@ -165,23 +165,23 @@ void loop() {
               stopState = "on";
             }
 
-            while (forwardState == "on"){
+            if (forwardState == "on"){
               moveForward();
             }
 
-            while (backwardsState == "on"){
+            if (backwardsState == "on"){
               moveBackward();
             }
 
-            while (leftState == "on"){
+            if (leftState == "on"){
               turnLeft();
             }
 
-            while (rightState == "on"){
+            if (rightState == "on"){
               turnRight();
             }
             
-            while (stopState == "on"){
+            if (stopState == "on"){
               stopMotors();
             }
 
