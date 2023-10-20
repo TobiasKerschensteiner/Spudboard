@@ -16,8 +16,10 @@ String leftState = "off";
 String rightState = "off";
 String stopState = "off";
 
-AccelStepper stepper1(AccelStepper::FULL4WIRE, 18, 5, 17, 16);
-AccelStepper stepper2(AccelStepper::FULL4WIRE, 26, 27, 14, 13);
+//pin belegung
+AccelStepper stepper1(AccelStepper::FULL4WIRE, 17, 18, 5, 16); //(Wenn + rück wenn - vor)
+AccelStepper stepper2(AccelStepper::FULL4WIRE, 26, 14, 27, 12); //(Wenn + rück wenn - vor)
+
 MultiStepper steppers;
 
 unsigned long currentTime = millis();
@@ -44,34 +46,62 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.begin();
+    // Max Geschwindigkeit soll nicht mehr als 2000 betragen
+  stepper1.setMaxSpeed(200);
+  stepper2.setMaxSpeed(200);
+
+  //sanfter anlauf
+  stepper1.setAcceleration(100);
+  stepper2.setAcceleration(100);
+
+  //Stepper zusammen fügen. Geht bis zu Max 10
+  steppers.addStepper(stepper1);
+  steppers.addStepper(stepper2);
+
 }
 
-void moveForward() {
-  int steps = 1000;
-  stepper1.move(steps);
-  stepper2.move(steps);
-  steppers.run();
+
+
+//Vorwärtsfahren
+void moveForward()
+{
+    int steps = 200; // Anzahl der schritte
+    stepper1.move(-steps);
+    stepper2.move(-steps);
+    stepper1.run();
+    stepper2.run();
 }
 
-void turnRight() {
-  int steps = 200;
-  stepper1.move(steps);
-  stepper2.move(-steps);
-  steppers.run();
+
+//Rechtedrehung 90°
+void turnRight()
+{
+    int steps = 200; // Anzahl der Schritte um 90° nach rechts zu drehen
+    stepper1.move(steps);
+    stepper2.move(-steps);
+    stepper1.run();
+    stepper2.run();
 }
 
-void turnLeft() {
-  int steps = 200;
-  stepper1.move(-steps);
-  stepper2.move(steps);
-  steppers.run();
+//Linksdrehung 90°
+void turnLeft()
+{
+
+    int steps = 200; //Anzahl der Schritte um 90° nach links zu drehen 
+    stepper1.move(-steps);
+    stepper2.move(steps);
+    stepper1.run();
+    stepper2.run();
 }
 
-void moveBackward() {
-  int steps = 1000;
-  stepper1.move(-steps);
-  stepper2.move(-steps);
-  steppers.run();
+//Rückwärtsfahren falls von nöten
+void moveBackward()
+{
+    int steps = 50000; //Anzahl der Schritte
+    stepper1.move(steps);
+    stepper2.move(steps);
+    stepper1.run();
+    stepper2.run();
 }
 
 void stopMotors() {
