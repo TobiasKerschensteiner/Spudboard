@@ -2,7 +2,6 @@
 Hilfe:
 https://cool-web.de/arduino/multi-function-shield-step-motor.htm
 https://www.airspayce.com/mikem/arduino/AccelStepper/
-AHHHHHHHHHHHHHHH
 */
 #include <Arduino.h>
 #include <AccelStepper.h>
