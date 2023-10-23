@@ -1,2 +1,2 @@
 # Spudboard
-Spuboard23_24 Penis
+Spuboard23_24
