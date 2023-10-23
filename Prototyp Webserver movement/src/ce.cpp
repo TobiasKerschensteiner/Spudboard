@@ -1,11 +1,13 @@
 /*
 Hilfe:
 https://cool-web.de/arduino/multi-function-shield-step-motor.htm
-https://www.airspayce.com/mikem/arduino/AccelStepper/
+https://www.airspayce.com/mikem/arduino/AccelStepper/  
+tt
 */
 #include <Arduino.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+
 
 //pin belegung
 AccelStepper stepper1(AccelStepper::FULL4WIRE, 17, 18, 5, 16); //(Wenn + rück wenn - vor)
