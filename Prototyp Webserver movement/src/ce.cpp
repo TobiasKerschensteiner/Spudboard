@@ -31,6 +31,16 @@ boolean turn7 = true;
 boolean turn8 = true;
 boolean turn9 = true;
 boolean turn10 = true;
+boolean turn11 = true;
+boolean turn12 = true;
+boolean turn13 = true;
+boolean turn14 = true;
+boolean turn15 = true;
+boolean turn16 = true;
+boolean turn17 = true;
+boolean turn18 = true;
+boolean turn19 = true;
+boolean turn20 = true;
  
 
 void setup() {
@@ -115,6 +125,57 @@ void loop()
       stepper1.move(-turnSteps);
       stepper2.move(turnSteps);
     }
+    else if (turn11)
+    {
+      stepper1.move(9000);
+      stepper2.move(9000);
+    }
+    else if (turn12)
+    {
+      stepper1.move(turnSteps);
+      stepper2.move(-turnSteps);
+    }
+    else if (turn13)
+    {
+      stepper1.move(1000);
+      stepper2.move(1000);
+    }
+    else if (turn14)
+    {
+      stepper1.move(turnSteps);
+      stepper2.move(-turnSteps);
+    }
+    else if (turn15)
+    {
+      stepper1.move(9000);
+      stepper2.move(9000);
+    }
+    else if (turn16)
+    {
+      stepper1.move(-turnSteps);
+      stepper2.move(turnSteps);
+    }
+    else if (turn17)
+    {
+      stepper1.move(1000);
+      stepper2.move(1000);
+    }
+    else if (turn18)
+    {
+      stepper1.move(-turnSteps);
+      stepper2.move(turnSteps);
+    }
+    else if (turn19)
+    {
+      stepper1.move(9000);
+      stepper2.move(9000);
+    }
+    else if (turn20)
+    {
+      stepper1.move(turnSteps);
+      stepper2.move(-turnSteps);
+    }
+
 
     // Setzen der Geschwindigkeit
     stepper1.setSpeed(stepperSpeed);
@@ -170,6 +231,56 @@ void loop()
     else if (turn10)
     {
       turn10 = false;
+      turn11 = true;
+    }
+    else if (turn11)
+    {
+      turn11 = false;
+      turn12 = true;
+    }
+    else if (turn12)
+    {
+      turn12 = false;
+      turn13 = true;
+    }
+    else if (turn13)
+    {
+      turn13 = false;
+      turn14 = true;
+    }
+    else if (turn14)
+    {
+      turn14 = false;
+      turn15 = true;
+    }
+    else if (turn15)
+    {
+      turn15 = false;
+      turn16= true;
+    }
+    else if (turn16)
+    {
+      turn16 = false;
+      turn17 = true;
+    }
+    else if (turn17)
+    {
+      turn17 = false;
+      turn18 = true;
+    }
+    else if (turn18)
+    {
+      turn18 = false;
+      turn19 = true;
+    }
+    else if (turn19)
+    {
+      turn19 = false;
+      turn20 = true;
+    }
+    else if (turn20)
+    {
+      turn20 = false;
     }
   }
   
