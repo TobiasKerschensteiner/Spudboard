@@ -20,14 +20,21 @@ int Fahrmodus = 0;
 //43= Fährt nach unten Linke Kante
 
 //50= Bot Fährt nachhause von Rechts
+
+
 //51= Bot ist zuhause?
+
+
+
 int Sensor = 0; //Sensor = 0-> Sensor erkennt boden, Sensor = 1 -> Sensor erkennt keinen Boden
 String Start = "off";
 const int buttonPin = 0;
 const int Drehkonstante = 100; //Wieviel es braucht um eine 90° Drehung zu machen
 const int Größe = 200;
+
 int ZählerFahren = 0;
 int ZählerDrehen = 0;
+
 void loop(){
 
     if (buttonPin == 1){
@@ -65,8 +72,13 @@ void loop(){
         //dreht sich nach unten
         Fahrmodus=21;
     }
-    if(Fahrmodus=21){
+    if((Fahrmodus=21)&&(ZählerDrehen!=Drehkonstante)){
         //dreht sich nach unten rechte Kante um Drehkonstante
+        ZählerDrehen +1;
+
+    }
+    if((Fahrmodus=21)&&(ZählerDrehen=Drehkonstante)){
+        ZählerDrehen=0;
         Fahrmodus=42;
     }
     if((Fahrmodus=42)&&(Sensor=0)&&(ZählerFahren!=Größe)){
