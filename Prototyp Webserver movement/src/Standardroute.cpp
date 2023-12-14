@@ -35,6 +35,14 @@ const int Größe = 200;
 int ZählerFahren = 0;
 int ZählerDrehen = 0;
 
+int Standardy =0; //Höhe Tafel
+int Standardx =0; //Breite Tafel
+int Standardxabgemessen =0; //Frägt ab ob x abgemessen ist
+int aktuell =0; //gemachte Steps
+double prozent = ((double)aktuell / insgesamt) * 100; //Prozentzahl bereitsgewischte Steps von Insgesamt
+int insgesamt= (Standardy/Größe)*Standardx;
+
+
 void loop(){
 
     if (buttonPin == 1){
@@ -47,87 +55,103 @@ void loop(){
     }
     if ((Fahrmodus = 1) && (Sensor = 0)){
         //fahr geradeaus hoch
-
+        //GeradeausFunktion hier Vorkommen austauschen
+        Standardy +1;
     }
     else if ((Fahrmodus = 1) && (Sensor = 1)) //kommt an Oberer Kante an
     {
-        //dreht nach rechts um 90°
-        Fahrmodus= 12; 
+        Fahrmodus= 12;           //initialisierung Rechtsdrehung
     }
     if((Fahrmodus = 12) && (ZählerDrehen!=Drehkonstante))
     {
         ZählerDrehen +1;
-        //dreht sich nach rechts bis 90° erreicht
+        //RechtsdrehenFunktion hier Vorkommen austauschen
 
     }
     else if((Fahrmodus=12)&&(ZählerDrehen=Drehkonstante)){
-        Fahrmodus =2;
+        Fahrmodus =2;           //initialisierung nach rechts fahren
         ZählerDrehen =0;
     }
     if((Fahrmodus = 2) && (Sensor=0)){       //hat sich nach rechts gedreht und fährt jetzt geradeaus
-        //fährt gerade aus bis sensor =1
-
+        //GeradeausFunktion hier Vorkommen austauschen
+        aktuell+1;
+        if (Standardxabgemessen=0){
+            Standardx+1;
+        }
     }
     else if((Fahrmodus =2)&&(Sensor=1)){        //kommt an rechter Wand an
-        //dreht sich nach unten
-        Fahrmodus=21;
+        Fahrmodus=21;           //Initialisierung Rechtsdrehung
+        if (Standardxabgemessen=0){
+            Standardxabgemessen=1;
+        }           
     }
     if((Fahrmodus=21)&&(ZählerDrehen!=Drehkonstante)){
         //dreht sich nach unten rechte Kante um Drehkonstante
+        //RechtsdrehenFunktion hier Vorkommen austauschen
         ZählerDrehen +1;
 
     }
     if((Fahrmodus=21)&&(ZählerDrehen=Drehkonstante)){
         ZählerDrehen=0;
-        Fahrmodus=42;
+        Fahrmodus=42;           //Initialisierung Rechte Kante runterfahren
     }
     if((Fahrmodus=42)&&(Sensor=0)&&(ZählerFahren!=Größe)){
+        //GeradeausFunktion hier Vorkommen austauschen
         //fahr nach unten Rechte kante 
         ZählerFahren +1;
+        aktuell+1;
     }
     else if((Fahrmodus=42)&&(Sensor=0)&&(ZählerFahren=Größe)){
-        Fahrmodus=22;
+        Fahrmodus=22;           //Initialisierung Rechte Kante zweites mal rechts abbiegen rechte Kante
         ZählerFahren =0;
     }
     else if((Fahrmodus=42)&&(Sensor=1)&&(ZählerFahren!=Größe)){
         Fahrmodus=50;
         ZählerFahren =0;
     }  
-    if((Fahrmodus=22)){
-        //dreht sich um Drehkonstante nach rechts um nach links zu fahren
-        Fahrmodus=3;
+    if((Fahrmodus=22)&&(ZählerDrehen!=Drehkonstante)){
+        //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
+        //RechtsdrehenFunktion hier Vorkommen austauschen
+        ZählerDrehen +1;
+
+    }
+    else if((Fahrmodus=22)&&(ZählerDrehen=Drehkonstante)){
+        ZählerDrehen=0;
+        Fahrmodus=3;           //Initialisierung nach links fahren
     }
     if((Fahrmodus=3)&&(Sensor=0)){
+        aktuell +1;
+        //GeradeausFunktion hier Vorkommen austauschen
         //fährt gerade aus nach links
     }
     else if((Fahrmodus=3)&&(Sensor=1)){
-        //dreht sich nach links an der linken Kante zum ersten mal
-        Fahrmodus=31;
+        Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
     }
     if((Fahrmodus=31)&&(ZählerDrehen!=Drehkonstante)){
         ZählerDrehen +1;
-        //Drehen Funktion
+        //LinksdrehenFunktion hier Vorkommen austauschen
     }
     else if((Fahrmodus=31)&&(ZählerDrehen=Drehkonstante)){
         ZählerDrehen =0;
-        Fahrmodus=43;
+        Fahrmodus=43;       //Initialisierung Fahren an der liinken Kante 
     }
     if((Fahrmodus=43)&&(Sensor=0)&&(ZählerFahren!=Größe)){
-        //FahrFunktion
+        //GeradeausFunktion hier Vorkommen austauschen
+        aktuell +1;
         ZählerFahren +1;
     }
     else if((Fahrmodus=43)&&(Sensor=1)&&(ZählerFahren!=Größe)){
         Fahrmodus=51;
     }
     else if((Fahrmodus=43)&&(Sensor=0)&&(ZählerFahren=Größe)){
-        Fahrmodus=32;
+        Fahrmodus=32;       //Initialisierung Linksdrehung an der linken Kante zum zweiten Mal
     }
     if((Fahrmodus=32)&&(ZählerDrehen!=Drehkonstante)){
         ZählerDrehen +1;
-        //Drehen Funktion
+        //LinksdrehenFunktion hier Vorkommen austauschen
     }
     else if((Fahrmodus=32)&&(ZählerDrehen=Drehkonstante)){
-        ZählerDrehen =0;
+        ZählerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
         Fahrmodus=2;
     }
     if((Fahrmodus=50)&&(Sensor=0)){
