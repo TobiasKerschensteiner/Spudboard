@@ -40,8 +40,8 @@ int Standardx =0; //Breite Tafel
 int Standardxabgemessen =0; //Frägt ab ob x abgemessen ist
 int aktuell =0; //gemachte Steps
 double prozent = ((double)aktuell / insgesamt) * 100; //Prozentzahl bereitsgewischte Steps von Insgesamt
-int insgesamt= (Standardy/Größe)*Standardx;
-
+int insgesamt= (Standardy/Größe)*Standardx+Standardx;
+int aktuelly=0;
 
 void loop(){
 
@@ -157,20 +157,6 @@ void loop(){
     if((Fahrmodus=50)&&(Sensor=0)){
         
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }
