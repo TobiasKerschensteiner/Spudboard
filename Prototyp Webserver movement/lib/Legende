@@ -1,0 +1,31 @@
+//0= stopp, 
+//1= fährt nach oben, 
+//2= fährt nach rechts, 
+//3= fährt nach links, 
+//4= fährt nach unten
+
+//12= dreht sich rechts herum bei nach oben fahren,
+
+//21=drehts sich nach rechts rechte Kante 1.Mal
+//22=drehts sich nach rechts rechte Kante 2.Mal
+
+//23=Komplettdrehung rechte Kante
+
+
+//31= dreht sich nach links linke Kante 1.Mal
+//32= dreht sich nach links linke Kante 2.Mal
+
+//42= fährt nach unten Rechte Kante
+//43= Fährt nach unten Linke Kante
+
+//50= Bot dreht sich rechts um nach links um nachhause zu fahren(ist an rechter Kante)
+
+
+//51= Bot kommt von rechts und will Nachhause
+//52= Bot will nachhause und ist an der linken Kante und muss nach unten fahren 
+
+
+//54= Bot dreht sich nach rechts um dann Rückwärts zu fahren 
+//55= Bot dreht sich um 180° bei Ladestation
+//56= Bot fährt rückwärts um anzudocken
+
