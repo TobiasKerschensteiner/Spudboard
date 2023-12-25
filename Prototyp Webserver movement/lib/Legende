@@ -29,3 +29,7 @@
 //55= Bot dreht sich um 180° bei Ladestation
 //56= Bot fährt rückwärts um anzudocken
 
+//ButtonPin = 1 Standardroute, 
+//2 = Abmessen, 
+//11= Links oben, 12= links unten, 
+//21= rechts oben, 22 = rechts unten

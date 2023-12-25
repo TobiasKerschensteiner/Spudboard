@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <accelstepper.h>
-
+#include <WiFi.h>
+#include <FS.h>
+#include <SPIFFS.h>
 int Fahrmodus = 0; 
 //0= stopp, 
 //1= fährt nach oben, 
@@ -54,7 +56,56 @@ int rückfahrkonstante=10;
 double prozent = ((double)aktuell / insgesamt) * 100; //Prozentzahl bereitsgewischte Steps von Insgesamt
 int insgesamt= (Standardy/Größe)*Standardx+Standardx;
 
+const char *ssid = "DEIN_WIFI_SSID";
+const char *password = "DEIN_WIFI_PASSWORT";
+
+WiFiServer server(80);
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  if (!SPIFFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return;
+  }
+}
+
 void loop(){
+  WiFiClient client = server.available();
+  if (client) {
+    Serial.println("New client connected");
+    String request = client.readStringUntil('\r');
+    Serial.println(request);
+    client.flush();
+
+    if (request.indexOf("/index.html") != -1) {
+      // Lese und sende die HTML-Datei
+      File htmlFile = SPIFFS.open("/index.html", "r");
+      if (htmlFile) {
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-Type: text/html");
+        client.println();
+        client.println(htmlFile.readString());
+        htmlFile.close();
+      } else {
+        client.println("HTTP/1.1 404 Not Found");
+        client.println();
+      }
+    }
+    client.stop();
+    delay(1);
+    Serial.println("Client disconnected");
+  }
+
+
+
+
 
     if (buttonPin == 1){
             Start = "on";
