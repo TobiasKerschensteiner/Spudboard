@@ -2,7 +2,9 @@
 #include <accelstepper.h>
 #include <WiFi.h>
 #include <FS.h>
-#include <SPIFFS.h>
+#include <WebServer.h>
+#include <WiFi.h>
+#include <Server.h>
 int Fahrmodus = 0; 
 //0= stopp, 
 //1= faehrt nach oben, 
@@ -34,8 +36,8 @@ int Fahrmodus = 0;
 
 int Sensor = 0; //Sensor = 0-> Sensor erkennt boden, Sensor = 1 -> Sensor erkennt keinen Boden
 String Start = "off";
-const int buttonPin = 0;
-//ButtonPin = 1 Standardroute, 2 = Abmessen, 11= Links oben, 12= Rechts oben, 21= links unten, 22 = rechts unten
+String Einstellung = "off";
+//different Options: "standardroute","Kalibrierung", "oben links","unten links","oben rechts","unten rechts"
 const int Drehkonstante = 100; //Wieviel es braucht um eine 90° Drehung zu machen
 const int Groesse = 200; 
 
@@ -57,13 +59,34 @@ int rueckfahrkonstante=10;
 int insgesamt= (Standardy/Groesse)*Standardx+Standardx;
 double prozent = ((double)aktuell / insgesamt) * 100; //Prozentzahl bereitsgewischte Steps von Insgesamt
 
+const char *ssid = "Alpakhan";
+const char *password = "Bananenmus";
+
+String header;
+const unsigned long timeoutTime = 1000; // Timeout after 1 second
+unsigned long currentTime = 0;
+unsigned long previousTime = 0;
+WiFiServer server(80);
+
+void setup(){
+  Serial.begin(9600);
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  server.begin();
+}
 
 void loop(){
 
-
-
-
-    if (buttonPin == 1){
+    if (Einstellung == "Standardroute"){
             Start = "on";
 
         }
@@ -256,7 +279,7 @@ void loop(){
             }
         }
 
-    if (buttonPin == 2){
+    if (Einstellung == "Kalibrierung"){
             Start = "on";
 
         }
@@ -371,7 +394,7 @@ void loop(){
 
             }
         }
-    if ((buttonPin == 11)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
+    if ((Einstellung == "oben links")&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
             Start = "on";
         }
 
@@ -559,7 +582,7 @@ void loop(){
             }
         }
         
-    if ((buttonPin == 12)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
+    if ((Einstellung == "unten links")&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
             Start = "on";
 
         }
@@ -742,191 +765,8 @@ void loop(){
             }
         }
 
-    if ((buttonPin == 12)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
-            Start = "on";
-
-        }
-
-        if (Start == "on"){
-            Fahrmodus = 1;
-        }
-        if ((Fahrmodus = 1)){  
-            if((aktuelly!=Standardy/2)){
-                //fahr geradeaus hoch
-                //GeradeausFunktion hier Vorkommen austauschen
-            }
-            if ((aktuelly=Standardy/2)) //kommt an Oberer Kante an
-            {
-                Fahrmodus= 12;           //initialisierung Rechtsdrehung
-            }
-        }
-        if((Fahrmodus = 12)){
-            if((ZaehlerDrehen!=Drehkonstante))
-            {
-                ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                Fahrmodus =2;           //initialisierung nach rechts fahren
-                ZaehlerDrehen =0;
-            }
-        }
-        if((Fahrmodus = 2)){
-            if((aktuellx!=Standardx/2)){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
-                aktuell+1;
-                aktuellx+1;
-            }
-            if((aktuellx=Standardx/2)&&(letzteRunde=0)){        //kommt an rechter Wand an
-                Fahrmodus=21;           //Initialisierung Rechtsdrehung
-                aktuellx=0;
-            }
-            if ((aktuellx=Standardx/2)&&(letzteRunde=1)){
-                Fahrmodus=23;
-                aktuellx=0;
-            }
-        }
-        if((Fahrmodus=23)){
-            if((ZaehlerDrehen!=2*Drehkonstante)){
-                //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
-                ZaehlerDrehen +1;
-            }
-            if((ZaehlerDrehen=2*Drehkonstante)){
-                ZaehlerDrehen=0;
-                Fahrmodus=42;           //Initialisierung Zurueckfhren
-            }
-        } 
-        if((Fahrmodus=21)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                //dreht sich nach unten rechte Kante um Drehkonstante
-                //RechtsdrehenFunktion hier Vorkommen austauschen
-                ZaehlerDrehen +1;
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen=0;
-                Fahrmodus=42;           //Initialisierung Rechte Kante runterfahren
-            }
-        }
-        if((Fahrmodus=42)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
-                //fahr nach unten Rechte kante 
-                ZaehlerFahren +1;
-                aktuell+1;
-            }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
-                Fahrmodus=22;           //Initialisierung Rechte Kante zweites mal rechts abbiegen rechte Kante
-                ZaehlerFahren =0;
-            }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
-                Fahrmodus=50;
-                ZaehlerFahren =0;
-            }
-        }
-        if((Fahrmodus=50)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                ZaehlerDrehen+1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen=0;
-                Fahrmodus=51;
-            }
-        }
-        if((Fahrmodus=51)){
-            if((Sensor=0)){
-                //GeradeausFunktion hier Vorkommen austauschen
-            }
-            if ((Sensor=1))
-            {
-            Fahrmodus=54;
-            }
-        }   
-        if((Fahrmodus=54)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                //LinksdrehenFunktion hier Vorkommen austauschen
-                ZaehlerDrehen+1;
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen=0;
-                Fahrmodus=56;
-            }
-        }
-        if((Fahrmodus=56)){
-            if((aktuelly!=rueckfahrkonstante))
-            {
-                //RueckwaertsFunktion hier Vorkommen austauschen
-                aktuelly+1;
-            }
-            if((aktuelly=rueckfahrkonstante)) //Roboter kommt an Ladestation an
-            {
-                aktuelly=0;
-                aktuell=0;
-                aktuellx=0;
-                Start="off";
-            }
-        }
-        if((Fahrmodus=22)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
-                //RechtsdrehenFunktion hier Vorkommen austauschen
-                ZaehlerDrehen +1;
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen=0;
-                Fahrmodus=3;           //Initialisierung nach links fahren
-            }
-        }
-        if((Fahrmodus=3)){
-            if((Sensor=0)){
-                aktuell +1;
-                //GeradeausFunktion hier Vorkommen austauschen
-                //faehrt gerade aus nach links
-            }
-            if((Sensor=1)){
-                aktuell=0;
-                Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
-            }
-        }
-        if((Fahrmodus=31)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen =0;
-                Fahrmodus=43;       //Initialisierung Fahren an der liinken Kante 
-            }
-        }
-        if((Fahrmodus=43)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
-                aktuell +1;
-                aktuelly +1;
-                ZaehlerFahren +1;
-            }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
-                letzteRunde=1; //faehrt ein letztes mal nach rechts
-                Fahrmodus=32;
-                ZaehlerFahren=0;
-            }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
-                Fahrmodus=32;       //Initialisierung Linksdrehung an der linken Kante zum zweiten Mal
-                ZaehlerFahren=0;
-            }
-        }
-        if((Fahrmodus=32)){
-            if((ZaehlerDrehen!=Drehkonstante)){
-                ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
-            }
-            if((ZaehlerDrehen=Drehkonstante)){
-                ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
-                Fahrmodus=2;
-            }
-        }
-if ((buttonPin == 21)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
+    
+if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
             Start = "on";
         }
 
@@ -1113,7 +953,7 @@ if ((buttonPin == 21)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
             }
         }
                 
-    if ((buttonPin == 22)&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
+    if ((Einstellung == "unten rechts")&&(Standardxabgemessen=1)&&(Standardyabgemessen=1)){
             Start = "on";
 
         }

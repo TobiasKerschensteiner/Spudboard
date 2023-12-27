@@ -177,7 +177,7 @@ void loop() {
               turnLeft();
             }
 
-            if (rightState == "on"){
+            if (rightState == "on"){ 
               turnRight();
             }
             
