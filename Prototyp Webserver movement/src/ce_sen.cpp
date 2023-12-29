@@ -359,28 +359,30 @@ void setup()
 //Test Route
 void loop()
 {
-  Serial.println("Wähle Obtion: (1) abmessen, (2) standartroute");
-  while (!Serial.available())
-  {
-    //warten auf eingabe 
-  }
+  // Serial.println("Wähle Obtion: (1) abmessen, (2) standartroute");
+  // while (!Serial.available())
+  // {
+  //   //warten auf eingabe 
+  // }
 
-  int choice =  1; //Serial.parseInt()
+  // int choice =  Serial.parseInt();
 
-  switch (choice)
-  {
-  case 1:
-    abmessen();
-    break;
+  // switch (choice)
+  // {
+  // case 1:
+  //   abmessen();
+  //   break;
 
-  case 2:
-    standartroute();
-    break;
+  // case 2:
+  //   standartroute();
+  //   break;
 
-  default:
-    Serial.println("Ungültige Auswahl");
-    break;
-  }
+  // default:
+  //   Serial.println("Ungültige Auswahl");
+  //   break;
+  // }
+  serial.print("ICH LEBEB NOCH")
+  standartroute();
 
   // Motoren zu den Zielpositionen bewegen
   stepper1.runSpeedToPosition();
