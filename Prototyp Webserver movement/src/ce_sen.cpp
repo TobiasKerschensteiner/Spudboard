@@ -365,7 +365,7 @@ void loop()
     //warten auf eingabe 
   }
 
-  int choice = Serial.parseInt();
+  int choice =  1; //Serial.parseInt()
 
   switch (choice)
   {
