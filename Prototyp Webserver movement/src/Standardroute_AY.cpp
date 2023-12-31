@@ -34,12 +34,12 @@ int Fahrmodus = 0;
 //56= Bot faehrt rueckwaerts um anzudocken
 
 
-int Sensor = 0; //Sensor = 0-> Sensor erkennt boden, Sensor = 1 -> Sensor erkennt keinen Boden
+int Sensorvalue = 0; //Sensorvalue = 0-> Sensorvalue erkennt boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
 String Start = "off";
 String Einstellung = "off";
 //different Options: "standardroute","Kalibrierung", "oben links","unten links","oben rechts","unten rechts"
-const int Drehkonstante = 100; //Wieviel es braucht um eine 90° Drehung zu machen
-const int Groesse = 200; 
+const int Drehkonstante = 42; //Wieviel es braucht um eine 90° Drehung zu machen*100
+const int Groesse = 500; //Breite der Bahn
 
 int ZaehlerFahren = 0;
 int ZaehlerDrehen = 0;
@@ -67,6 +67,21 @@ const unsigned long timeoutTime = 1000; // Timeout after 1 second
 unsigned long currentTime = 0;
 unsigned long previousTime = 0;
 WiFiServer server(80);
+#define MICROSTEP 16
+int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
+
+
+//pin belegung
+AccelStepper stepper1(MICROSTEP, 17, 18, 5, 16);  
+AccelStepper stepper2(MICROSTEP, 26, 14, 27, 12);
+int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
+int gyroscl = 22;
+int gyrosda = 21;
+
+//Variablen
+int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
+int stepperSpeed = 1000; //Geschwindigkeit
+int turnSteps = 4200; //anzahl an schritten für eine 90° drehung 
 
 void setup(){
   Serial.begin(9600);
@@ -83,9 +98,46 @@ void setup(){
   Serial.println(WiFi.localIP());
   server.begin();
 }
+//90° Drehung nach rechts
+void turnRight()
+  {
+    stepper1.move(100);
+    stepper2.move(-100);
 
+  }
+
+//90° Drehung nach links
+void turnLeft()
+{
+  stepper1.move(-100);
+  stepper2.move(100);
+
+}
+
+//mini lauf nach unten (nach dem Bahnwechsel)
+void moveswitch()
+{
+  stepper1.move(500);
+  stepper2.move(500);
+
+
+}
+
+// Forwärtslauf fürs Abmessen mit merken und ausgabe
+void moveForwab()
+{
+  stepper1.move(100);
+  stepper2.move(100);
+
+}
+
+void moveBackward()
+{
+    stepper1.move(-100);
+    stepper2.move(-100);
+}
 void loop(){
-
+while(1){
     if (Einstellung == "Standardroute"){
             Start = "on";
 
@@ -95,14 +147,14 @@ void loop(){
             Fahrmodus = 1;
         }
         if (Fahrmodus = 1){ 
-            if(Sensor = 0){
+            if(Sensorvalue = 0){
             //fahr geradeaus hoch
-            //GeradeausFunktion hier Vorkommen austauschen
+            moveForwab();
                 if (Standardyabgemessen=0){
                     Standardy+1;
 
             }
-            if (Sensor = 1) //kommt an Oberer Kante an
+            if (Sensorvalue = 1) //kommt an Oberer Kante an
             {
                 Standardyabgemessen=1;
                 Fahrmodus= 12;           //initialisierung Rechtsdrehung
@@ -112,7 +164,7 @@ void loop(){
             if(ZaehlerDrehen!=Drehkonstante)
             {
                 ZaehlerDrehen +1;
-            //RechtsdrehenFunktion hier Vorkommen austauschen
+            turnRight();
 
             }
             if(ZaehlerDrehen=Drehkonstante){
@@ -120,26 +172,26 @@ void loop(){
                 ZaehlerDrehen =0;
             }
         if(Fahrmodus = 2) { 
-            if(Sensor=0){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-            //GeradeausFunktion hier Vorkommen austauschen
+            if(Sensorvalue=LOW){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
+            moveForwab();
                 aktuell+1;
                 if (Standardxabgemessen=0){
                     Standardx+1;
                 }
             }    
-            if((Sensor=1)&&(letzteRunde=0)){        //kommt an rechter Wand an
+            if((Sensorvalue=HIGH)&&(letzteRunde=0)){        //kommt an rechter Wand an
                 Fahrmodus=21;           //Initialisierung Rechtsdrehung
                 if (Standardxabgemessen=0){
                     Standardxabgemessen=1;
                 }           
             }
-            if ((Sensor=1)&&(letzteRunde=1)){
+            if ((Sensorvalue=HIGH)&&(letzteRunde=1)){
                 Fahrmodus=23;
             }
         if(Fahrmodus=23){
             if(ZaehlerDrehen!=2*Drehkonstante){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
         
@@ -151,7 +203,7 @@ void loop(){
         if(Fahrmodus=21){
             if(ZaehlerDrehen!=Drehkonstante){
             //dreht sich nach unten rechte Kante um Drehkonstante
-            //RechtsdrehenFunktion hier Vorkommen austauschen
+            turnRight();
                 ZaehlerDrehen +1;
 
             }
@@ -161,18 +213,18 @@ void loop(){
             }
         }
         if(Fahrmodus=42){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)&&(ZaehlerFahren!=Groesse)){
+                moveForwab();
                 //fahr nach unten Rechte kante 
                 ZaehlerFahren +1;
                 aktuell+1;
                 aktuelly+1;
             }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
+            if((Sensorvalue=LOW)&&(ZaehlerFahren=Groesse)){
                 Fahrmodus=22;           //Initialisierung Rechte Kante zweites mal rechts abbiegen rechte Kante
                 ZaehlerFahren =0;
             }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
+            if((Sensorvalue=HIGH)&&(ZaehlerFahren!=Groesse)){
                 Fahrmodus=50;
                 ZaehlerFahren =0;
             }
@@ -180,7 +232,7 @@ void loop(){
         if(Fahrmodus=50){
             if(ZaehlerDrehen!=Drehkonstante){
                 ZaehlerDrehen+1;
-            //RechtsdrehenFunktion hier Vorkommen austauschen
+            turnRight();
             }
         }
             if(ZaehlerDrehen=Drehkonstante){
@@ -189,16 +241,16 @@ void loop(){
 
         }
         if(Fahrmodus=51){
-            if(Sensor=0){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if(Sensorvalue=LOW){
+                moveForwab();
             }
-            if (Sensor=1){
+            if (Sensorvalue=HIGH){
                 Fahrmodus=54;
             }
         }
         if(Fahrmodus=54){
             if(ZaehlerDrehen!=Drehkonstante){
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if(ZaehlerDrehen=Drehkonstante){
                 ZaehlerDrehen=0;
@@ -209,7 +261,7 @@ void loop(){
         if(Fahrmodus=56){ 
             if(rueckfahrkonstante!=10)
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 rueckfahrkonstante+1;
             }
             if((rueckfahrkonstante=10)) //Roboter kommt an Ladestation an
@@ -223,7 +275,7 @@ void loop(){
         if(Fahrmodus=22){
             if(ZaehlerDrehen!=Drehkonstante){
                 //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu drehen
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -232,19 +284,19 @@ void loop(){
             }
         }
         if(Fahrmodus=3){
-            if(Sensor=0){
+            if(Sensorvalue=LOW){
                 aktuell +1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //faehrt gerade aus nach links
             }
-            if((Sensor=1)){
+            if((Sensorvalue=HIGH)){
                 Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
             }
         }
         if(Fahrmodus=31){
             if(ZaehlerDrehen!=Drehkonstante){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if(ZaehlerDrehen=Drehkonstante){
                 ZaehlerDrehen =0;
@@ -253,7 +305,7 @@ void loop(){
         }
         if(Fahrmodus=43){ 
             if((aktuelly!=Standardy)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell +1;
                 aktuelly +1;
                 ZaehlerFahren +1;
@@ -271,7 +323,7 @@ void loop(){
         if(Fahrmodus=32){ 
             if(ZaehlerDrehen!=Drehkonstante){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
@@ -288,14 +340,14 @@ void loop(){
             Fahrmodus = 1;
         }
         if (Fahrmodus = 1){ 
-            if(Sensor = 0){
+            if(Sensorvalue = 0){
                 //fahr geradeaus hoch
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 if (Standardyabgemessen=0){
                     Standardy+1;
                 }
             }
-            if((Sensor = 1)) //kommt an Oberer Kante an
+            if((Sensorvalue = 1)) //kommt an Oberer Kante an
             {
                 Standardyabgemessen=1;
                 Fahrmodus= 12;           //initialisierung Rechtsdrehung
@@ -305,7 +357,7 @@ void loop(){
             if(ZaehlerDrehen!=Drehkonstante)
             {
                 ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
 
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -314,13 +366,13 @@ void loop(){
             }
         }
         if(Fahrmodus = 2){ 
-            if (Sensor=0){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
+            if (Sensorvalue=LOW){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
+                moveForwab();
                 if (Standardxabgemessen=0){
                     Standardx+1;
                 }
             }
-            if((Sensor=1)){        //kommt an rechter Wand an
+            if((Sensorvalue=HIGH)){        //kommt an rechter Wand an
                 Fahrmodus=23;           //Initialisierung Rechtsdrehung
                 if (Standardxabgemessen=0){
                     Standardxabgemessen=1;
@@ -331,7 +383,7 @@ void loop(){
             if(ZaehlerDrehen!=2*Drehkonstante)
             {
                 ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=2*Drehkonstante)){
                 Fahrmodus =3;           //initialisierung nach rechts fahren
@@ -339,18 +391,18 @@ void loop(){
             }
         }
         if(Fahrmodus=3){
-            if(Sensor=0){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if(Sensorvalue=LOW){
+                moveForwab();
                 //faehrt gerade aus nach links
             }
-            if((Sensor=1)){
+            if((Sensorvalue=HIGH)){
                 Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
             }
         }
         if(Fahrmodus=31){ 
             if(ZaehlerDrehen!=Drehkonstante){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;
@@ -360,7 +412,7 @@ void loop(){
         if(Fahrmodus=50){
             if(aktuelly!=(Standardy-10)){
                 aktuelly+1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
             }
             if((aktuelly=(Standardy-10))){
                 aktuelly=0;
@@ -369,7 +421,7 @@ void loop(){
         }
         if(Fahrmodus=55){
             if((ZaehlerDrehen!=2*Drehkonstante)){
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen+1;
             }
             if((ZaehlerDrehen=2*Drehkonstante)){
@@ -380,7 +432,7 @@ void loop(){
         if(Fahrmodus=56){
             if((rueckfahrkonstante!=10))
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 rueckfahrkonstante+1;
             }
         
@@ -402,11 +454,11 @@ void loop(){
             Fahrmodus = 1;
         }
         if (Fahrmodus = 1){ 
-            if((Sensor=0)){
+            if((Sensorvalue=LOW)){
                 //fahr geradeaus hoch zur Startposition
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
             } 
-            if ((Sensor=1)) //kommt an Oberer Kante an
+            if ((Sensorvalue=HIGH)) //kommt an Oberer Kante an
             {
                 Fahrmodus= 12;           //initialisierung Rechtsdrehung
             }
@@ -415,7 +467,7 @@ void loop(){
             if((ZaehlerDrehen!=Drehkonstante))
             {
                 ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
 
             if((ZaehlerDrehen=Drehkonstante)){
@@ -426,7 +478,7 @@ void loop(){
         if(Fahrmodus = 2){ 
             if(aktuellx!=Standardx/2)
             {       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell+1;
                 aktuellx+1;
             }
@@ -443,7 +495,7 @@ void loop(){
         if(Fahrmodus=23){
             if((ZaehlerDrehen!=2*Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
 
@@ -455,7 +507,7 @@ void loop(){
         if(Fahrmodus=21){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -465,7 +517,7 @@ void loop(){
         }
         if(Fahrmodus=42){
             if((aktuelly!=(Standardy/2))&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //fahr nach unten Rechte kante 
                 ZaehlerFahren +1;
                 aktuell+1;
@@ -483,7 +535,7 @@ void loop(){
         if(Fahrmodus=50){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen+1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -491,10 +543,10 @@ void loop(){
             }
         }
         if((Fahrmodus=51)){
-            if(Sensor=0){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if(Sensorvalue=LOW){
+                moveForwab();
             }
-            if ((Sensor=1))
+            if ((Sensorvalue=HIGH))
             {
                 Fahrmodus=54;
             }
@@ -502,7 +554,7 @@ void loop(){
 
         if(Fahrmodus=54){
             if((ZaehlerDrehen!=Drehkonstante)){
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -512,7 +564,7 @@ void loop(){
         if((Fahrmodus=56)){
             if((aktuelly!=(Standardy/2)))
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 aktuelly+1;
             }
             if((aktuelly=(Standardy/2))) //Roboter kommt an Ladestation an
@@ -526,7 +578,7 @@ void loop(){
         if((Fahrmodus=22)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -535,19 +587,19 @@ void loop(){
             }
         }
         if((Fahrmodus=3)){
-            if((Sensor=0)){
+            if((Sensorvalue=LOW)){
                 aktuell +1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //faehrt gerade aus nach links
             }
-            if((Sensor=1)){
+            if((Sensorvalue=HIGH)){
                 Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
             }
         }
         if((Fahrmodus=31)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;
@@ -556,7 +608,7 @@ void loop(){
         }
         if((Fahrmodus=43)){
             if((aktuelly!=Standardy/2)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell +1;
                 aktuelly +1;
                 ZaehlerFahren +1;
@@ -574,7 +626,7 @@ void loop(){
         if((Fahrmodus=32)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
@@ -593,7 +645,7 @@ void loop(){
         if ((Fahrmodus = 1)){
             if((aktuelly!=Standardy/2)){
                 //fahr geradeaus hoch
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
             }
             if ((aktuelly=Standardy/2)) //kommt an Oberer Kante an
             {
@@ -604,7 +656,7 @@ void loop(){
             if((ZaehlerDrehen!=Drehkonstante))
             {
             ZaehlerDrehen +1;
-            //RechtsdrehenFunktion hier Vorkommen austauschen
+            turnRight();
 
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -614,7 +666,7 @@ void loop(){
         }
         if((Fahrmodus = 2)){
             if((aktuellx!=Standardx/2)){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell+1;
                 aktuellx+1;            
                 }
@@ -629,7 +681,7 @@ void loop(){
         if((Fahrmodus=23)){
             if((ZaehlerDrehen!=2*Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=2*Drehkonstante)){
@@ -640,7 +692,7 @@ void loop(){
         if((Fahrmodus=21)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -649,17 +701,17 @@ void loop(){
             }
         }
         if((Fahrmodus=42)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)&&(ZaehlerFahren!=Groesse)){
+                moveForwab();
                 //fahr nach unten Rechte kante 
                 ZaehlerFahren +1;
                 aktuell+1;
             }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
+            if((Sensorvalue=LOW)&&(ZaehlerFahren=Groesse)){
                 Fahrmodus=22;           //Initialisierung Rechte Kante zweites mal rechts abbiegen rechte Kante
                 ZaehlerFahren =0;
             }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
+            if((Sensorvalue=HIGH)&&(ZaehlerFahren!=Groesse)){
                 Fahrmodus=50;
                 ZaehlerFahren =0;
             }
@@ -667,7 +719,7 @@ void loop(){
         if((Fahrmodus=50)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen+1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -675,17 +727,17 @@ void loop(){
             }
         }
         if((Fahrmodus=51)){
-            if((Sensor=0)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)){
+                moveForwab();
             }
-            if((Sensor=1))
+            if((Sensorvalue=HIGH))
             {
                 Fahrmodus=54;
             }
         }
         if((Fahrmodus=54)){
             if((ZaehlerDrehen!=Drehkonstante)){
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -695,7 +747,7 @@ void loop(){
         if((Fahrmodus=56)){
             if((aktuelly!=rueckfahrkonstante))
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 aktuelly+1;
             }
             if((aktuelly=rueckfahrkonstante)) //Roboter kommt an Ladestation an
@@ -709,7 +761,7 @@ void loop(){
         if((Fahrmodus=22)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -718,19 +770,19 @@ void loop(){
             }
         }
         if((Fahrmodus=3)){
-            if((Sensor=0)){
+            if((Sensorvalue=LOW)){
                 aktuell +1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //faehrt gerade aus nach links
             }
-            if((Sensor=1)){
+            if((Sensorvalue=HIGH)){
                 Fahrmodus=31;       // Initialisierung Linksdrehung an der linken Kante zum ersten mal
             }
         }
         if((Fahrmodus=31)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;
@@ -738,18 +790,18 @@ void loop(){
             }
         }
         if((Fahrmodus=43)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)&&(ZaehlerFahren!=Groesse)){
+                moveForwab();
                 aktuell +1;
                 aktuelly +1;
                 ZaehlerFahren +1;
             }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
+            if((Sensorvalue=HIGH)&&(ZaehlerFahren!=Groesse)){
                 letzteRunde=1; //faehrt ein letztes mal nach rechts
                 Fahrmodus=32;
                 ZaehlerFahren=0;
             }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
+            if((Sensorvalue=LOW)&&(ZaehlerFahren=Groesse)){
                 Fahrmodus=32;       //Initialisierung Linksdrehung an der linken Kante zum zweiten Mal
                 ZaehlerFahren=0;
             }
@@ -757,7 +809,7 @@ void loop(){
         if((Fahrmodus=32)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
@@ -774,11 +826,11 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             Fahrmodus = 1;
         }
         if (Fahrmodus = 1){ 
-            if((Sensor=0)){
+            if((Sensorvalue=LOW)){
                 //fahr geradeaus hoch bis ende der Tafel
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
             } 
-            if ((Sensor=1)) //kommt an Oberer Kante an
+            if ((Sensorvalue=HIGH)) //kommt an Oberer Kante an
             {
                 Fahrmodus= 12;           //initialisierung Rechtsdrehung
             }
@@ -787,7 +839,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             if((ZaehlerDrehen!=Drehkonstante))
             {
                 ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
 
             if((ZaehlerDrehen=Drehkonstante)){
@@ -796,23 +848,23 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if(Fahrmodus = 2){ 
-            if(Sensor=0)
+            if(Sensorvalue=LOW)
             {       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell+1;
             }
 
-            if((Sensor=1)){        //kommt an rechter Wand an
+            if((Sensorvalue=HIGH)){        //kommt an rechter Wand an
                 Fahrmodus=21;           //Initialisierung Rechtsdrehung
             }
-            if((Sensor=1)&&(letzteRunde=1)){
+            if((Sensorvalue=HIGH)&&(letzteRunde=1)){
                 Fahrmodus=23;
             }
         }
         if(Fahrmodus=23){
             if((ZaehlerDrehen!=2*Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
 
@@ -824,7 +876,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if(Fahrmodus=21){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -834,7 +886,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         }
         if(Fahrmodus=42){
             if((aktuelly!=(Standardy/2))&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //fahr nach unten Rechte kante 
                 ZaehlerFahren +1;
                 aktuell+1;
@@ -852,7 +904,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if(Fahrmodus=50){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen+1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -860,10 +912,10 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if((Fahrmodus=51)){
-            if(Sensor=0){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if(Sensorvalue=LOW){
+                moveForwab();
             }
-            if ((Sensor=1))
+            if ((Sensorvalue=HIGH))
             {
                 Fahrmodus=54;
             }
@@ -871,7 +923,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
 
         if(Fahrmodus=54){
             if((ZaehlerDrehen!=Drehkonstante)){
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -881,7 +933,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=56)){
             if((aktuelly!=(Standardy/2)))
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 aktuelly+1;
             }
             if((aktuelly=(Standardy/2))) //Roboter kommt an Ladestation an
@@ -895,7 +947,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=22)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -907,7 +959,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             if((aktuelly!=Standardy/2)){
                 aktuell +1;
                 aktuelly+1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //faehrt gerade aus nach links
             }
             if((aktuelly!=Standardy/2)){
@@ -918,7 +970,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=31)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;
@@ -927,7 +979,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         }
         if((Fahrmodus=43)){
             if((aktuelly!=Standardy/2)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 aktuell +1;
                 aktuelly +1;
                 ZaehlerFahren +1;
@@ -945,7 +997,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=32)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
@@ -964,7 +1016,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if ((Fahrmodus = 1)){  
             if((aktuelly!=Standardy/2)){
                 //fahr geradeaus hoch 
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
             }
             if ((aktuelly=Standardy/2)) //kommt an Oberer Kante an
             {
@@ -975,7 +1027,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             if((ZaehlerDrehen!=Drehkonstante))
             {
                 ZaehlerDrehen +1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 Fahrmodus =2;           //initialisierung nach rechts fahren
@@ -983,21 +1035,21 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if((Fahrmodus = 2)){
-            if((Sensor=0)){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)){       //hat sich nach rechts gedreht und faehrt jetzt geradeaus
+                moveForwab();
                 aktuell+1;
             }
-            if((Sensor=1)&&(letzteRunde=0)){        //kommt an rechter Wand an
+            if((Sensorvalue=HIGH)&&(letzteRunde=0)){        //kommt an rechter Wand an
                 Fahrmodus=21;           //Initialisierung Rechtsdrehung
             }
-            if ((Sensor=1)&&(letzteRunde=1)){
+            if ((Sensorvalue=HIGH)&&(letzteRunde=1)){
                 Fahrmodus=23;
             }
         }
         if((Fahrmodus=23)){
             if((ZaehlerDrehen!=2*Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=2*Drehkonstante)){
@@ -1008,7 +1060,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=21)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach unten rechte Kante um Drehkonstante
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -1017,17 +1069,17 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if((Fahrmodus=42)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)&&(ZaehlerFahren!=Groesse)){
+                moveForwab();
                 //fahr nach unten Rechte kante 
                 ZaehlerFahren +1;
                 aktuell+1;
             }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
+            if((Sensorvalue=LOW)&&(ZaehlerFahren=Groesse)){
                 Fahrmodus=22;           //Initialisierung Rechte Kante zweites mal rechts abbiegen rechte Kante
                 ZaehlerFahren =0;
             }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
+            if((Sensorvalue=HIGH)&&(ZaehlerFahren!=Groesse)){
                 Fahrmodus=50;
                 ZaehlerFahren =0;
             }
@@ -1035,7 +1087,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=50)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen+1;
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen=0;
@@ -1043,17 +1095,17 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if((Fahrmodus=51)){
-            if((Sensor=0)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)){
+                moveForwab();
             }
-            if ((Sensor=1))
+            if ((Sensorvalue=HIGH))
             {
             Fahrmodus=54;
             }
         }   
         if((Fahrmodus=54)){
             if((ZaehlerDrehen!=Drehkonstante)){
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
                 ZaehlerDrehen+1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -1064,7 +1116,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=56)){
             if((aktuelly!=rueckfahrkonstante))
             {
-                //RueckwaertsFunktion hier Vorkommen austauschen
+                moveBackward();
                 aktuelly+1;
             }
             if((aktuelly=rueckfahrkonstante)) //Roboter kommt an Ladestation an
@@ -1078,7 +1130,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=22)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 //dreht sich nach rechts rechte Kante um Drehkonstante um nach links zu fahren 
-                //RechtsdrehenFunktion hier Vorkommen austauschen
+                turnRight();
                 ZaehlerDrehen +1;
             }
             if((ZaehlerDrehen=Drehkonstante)){
@@ -1090,7 +1142,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             if((aktuellx!=Standardx/2)){
                 aktuell +1;
                 aktuellx +1;
-                //GeradeausFunktion hier Vorkommen austauschen
+                moveForwab();
                 //faehrt gerade aus nach links
             }
             if((aktuellx=Standardx/2)){
@@ -1101,7 +1153,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=31)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;
@@ -1109,18 +1161,18 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
             }
         }
         if((Fahrmodus=43)){
-            if((Sensor=0)&&(ZaehlerFahren!=Groesse)){
-                //GeradeausFunktion hier Vorkommen austauschen
+            if((Sensorvalue=LOW)&&(ZaehlerFahren!=Groesse)){
+                moveForwab();
                 aktuell +1;
                 aktuelly +1;
                 ZaehlerFahren +1;
             }
-            if((Sensor=1)&&(ZaehlerFahren!=Groesse)){
+            if((Sensorvalue=HIGH)&&(ZaehlerFahren!=Groesse)){
                 letzteRunde=1; //faehrt ein letztes mal nach rechts
                 Fahrmodus=32;
                 ZaehlerFahren=0;
             }
-            if((Sensor=0)&&(ZaehlerFahren=Groesse)){
+            if((Sensorvalue=LOW)&&(ZaehlerFahren=Groesse)){
                 Fahrmodus=32;       //Initialisierung Linksdrehung an der linken Kante zum zweiten Mal
                 ZaehlerFahren=0;
             }
@@ -1128,7 +1180,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         if((Fahrmodus=32)){
             if((ZaehlerDrehen!=Drehkonstante)){
                 ZaehlerDrehen +1;
-                //LinksdrehenFunktion hier Vorkommen austauschen
+                turnLeft();
             }
             if((ZaehlerDrehen=Drehkonstante)){
                 ZaehlerDrehen =0;    //Initialisierung Rechtsfahren nachdem Links fertig gedreht wurde
@@ -1138,4 +1190,4 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
         }
         }
         }
-}
+}}
