@@ -69,6 +69,11 @@ unsigned long previousTime = 0;
 WiFiServer server(80);
 #define MICROSTEP 16
 int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
+String htmlTemplate = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+  "<link rel=\"icon\" href=\"data:,\">"
+  "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}"
+  ".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}"
+  ".button2 {background-color: #555555;}</style></head>";
 
 
 //pin belegung
@@ -137,7 +142,124 @@ void moveBackward()
     stepper2.move(-100);
 }
 void loop(){
-while(1){
+
+    WiFiClient client = server.available();
+
+  if (client) {
+    currentTime = millis();
+    previousTime = currentTime;
+    Serial.println("New Client.");
+    String currentLine = "";
+    while (client.connected() && currentTime - previousTime <= timeoutTime) {
+      currentTime = millis();
+      if (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+        header += c;
+        if (c == '\n') {
+          if (currentLine.length() == 0) {
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println("Connection: close");
+            client.println();
+
+        if (header.indexOf("/Standardroute/") >= 0) {
+              Serial.println("Standardroute An");
+              Einstellung = "Standardroute";
+              Start = "on";
+              
+            } else if (header.indexOf("/Zurückfahren/") >= 0) {
+              Serial.println("Stopp");
+              Einstellung = "Zurückfahren";
+              Start = "off";
+            } else if (header.indexOf("/Kallibrierung/") >= 0) {
+              Serial.println("Kalibrierung An");
+              Einstellung = "Kalibrierung";
+
+            } else if (header.indexOf("/oben links/") >= 0) {
+              Serial.println("oben links");
+              Einstellung = "oben links";
+
+            } else if (header.indexOf("/oben rechts/") >= 0) {
+              Serial.println("oben rechts");
+              Einstellung = "oben rechts";
+
+            } else if (header.indexOf("/unten links/") >= 0) {
+              Serial.println("unten links");
+              Einstellung = "unten links";
+
+            } else if (header.indexOf("/unten rechts/") >= 0) {
+              Serial.println("unten rechts");
+              Einstellung = "unten rechts";
+
+            }
+           String response = htmlTemplate;
+            response += "<body><h1>PotatoWeb</h1>";
+            response += "<p>Standardroute on </p>";
+
+            if (Start= "off") {
+
+              response += "<p><a href=\"/Standardroute/\"><button class=\"button\">ON</button></a></p>";
+
+
+            response += "<p>Kalibrierung on</p>";
+
+            if (Start= "off") {
+
+              response += "<p><a href=\"/Kalibrierung/\"><button class=\"button\">ON</button></a></p>";
+
+            }
+
+            response += "<p>oben links</p>";
+
+            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+
+              response += "<p><a href=\"/oben links/\"><button class=\"button\">ON</button></a></p>";
+
+            }
+
+            response += "<p>oben rechts</p>";
+
+            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+
+              response += "<p><a href=\"/oben rechts\"><button class=\"button\">ON</button></a></p>";
+            }
+            response += "<p>unten links</p>";
+
+            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+
+              response += "<p><a href=\"/unten links/\"><button class=\"button\">ON</button></a></p>";
+            }
+            response += "<p>unten rechts</p>";
+
+            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+
+              response += "<p><a href=\"/unten rechts\"><button class=\"button\">ON</button></a></p>";
+            }
+            if (Start == "on") {
+              response += "<p><a href=\"/Zurückfahren/\"><button class=\"button button2\">OFF</button></a></p>";
+            }
+            response += "</body></html>";
+            client.println(response);
+            break;
+          } else {
+            currentLine = "";
+          }
+        } else if (c != '\r') {
+          currentLine += c;
+        }
+      }
+    }
+    header = "";
+    client.stop();
+    Serial.println("Client disconnected.");
+    Serial.println("");
+  }
+}
+
+
+
+
     if (Einstellung == "Standardroute"){
             Start = "on";
 
@@ -187,7 +309,7 @@ while(1){
             }
             if ((Sensorvalue=HIGH)&&(letzteRunde=1)){
                 Fahrmodus=23;
-            }
+            }}
         if(Fahrmodus=23){
             if(ZaehlerDrehen!=2*Drehkonstante){
                 //dreht sich nach unten rechte Kante um Drehkonstante *2
@@ -1187,7 +1309,7 @@ if ((Einstellung == "oben rechts")&&(Standardxabgemessen=1)&&(Standardyabgemesse
                 Fahrmodus=2;
             }
         }
+
         }
         }
         }
-}}
