@@ -197,14 +197,14 @@ void loop(){
             response += "<body><h1>PotatoWeb</h1>";
             response += "<p>Standardroute on </p>";
 
-            if (Start= "off") {
+            if (Start== "off") {
 
               response += "<p><a href=\"/Standardroute/\"><button class=\"button\">ON</button></a></p>";
-
+            }
 
             response += "<p>Kalibrierung on</p>";
 
-            if (Start= "off") {
+            if (Start== "off") {
 
               response += "<p><a href=\"/Kalibrierung/\"><button class=\"button\">ON</button></a></p>";
 
@@ -212,7 +212,7 @@ void loop(){
 
             response += "<p>oben links</p>";
 
-            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+            if ((Start== "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
 
               response += "<p><a href=\"/oben links/\"><button class=\"button\">ON</button></a></p>";
 
@@ -220,7 +220,7 @@ void loop(){
 
             response += "<p>oben rechts</p>";
 
-            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+            if ((Start== "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
 
               response += "<p><a href=\"/oben rechts\"><button class=\"button\">ON</button></a></p>";
             }
@@ -232,7 +232,7 @@ void loop(){
             }
             response += "<p>unten rechts</p>";
 
-            if ((Start= "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
+            if ((Start== "off")&&(Standardxabgemessen=1)&(Standardyabgemessen=1)) {
 
               response += "<p><a href=\"/unten rechts\"><button class=\"button\">ON</button></a></p>";
             }
@@ -242,9 +242,9 @@ void loop(){
             response += "</body></html>";
             client.println(response);
             break;
-          } else {
+            if else {
             currentLine = "";
-          }
+            }
         } else if (c != '\r') {
           currentLine += c;
         }
