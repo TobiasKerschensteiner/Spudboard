@@ -5,6 +5,8 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <Server.h>
+
+#include "html_template.h"
 int Fahrmodus = 0; 
 //0= stopp, 
 //1= faehrt nach oben, 
@@ -69,11 +71,6 @@ unsigned long previousTime = 0;
 WiFiServer server(80);
 #define MICROSTEP 16
 int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
-String htmlTemplate = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-  "<link rel=\"icon\" href=\"data:,\">"
-  "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}"
-  ".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}"
-  ".button2 {background-color: #555555;}</style></head>";
 
 
 //pin belegung
@@ -82,6 +79,9 @@ AccelStepper stepper2(MICROSTEP, 26, 14, 27, 12);
 int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
 int gyroscl = 22;
 int gyrosda = 21;
+int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
+int stepperSpeed = 1000; //Geschwindigkeit
+int turnSteps = 4200; //anzahl an schritten für eine 90° drehung 
 
 //Variablen
 int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
@@ -144,8 +144,8 @@ void moveBackward()
 void loop(){
 
     WiFiClient client = server.available();
-
-  if (client) {
+    const char* myHtmlContent = htmlTemplate;
+    if (client) {
     currentTime = millis();
     previousTime = currentTime;
     Serial.println("New Client.");
@@ -182,6 +182,7 @@ void loop(){
 
             } else if (header.indexOf("/oben rechts/") >= 0) {
               Serial.println("oben rechts");
+
               Einstellung = "oben rechts";
 
             } else if (header.indexOf("/unten links/") >= 0) {
@@ -242,7 +243,8 @@ void loop(){
             response += "</body></html>";
             client.println(response);
             break;
-            if else {
+            }
+            else {
             currentLine = "";
             }
         } else if (c != '\r') {
@@ -255,9 +257,6 @@ void loop(){
     Serial.println("Client disconnected.");
     Serial.println("");
   }
-}
-
-
 
 
     if (Einstellung == "Standardroute"){
