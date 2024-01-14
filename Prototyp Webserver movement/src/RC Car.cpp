@@ -26,6 +26,17 @@ unsigned long currentTime = millis();
 unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 
+
+int stepCounter;
+int steps = 1000;
+int ENABLEL = 18;
+int STEPL = 4;
+int DIRL = 17;
+
+int ENABLER = 18;
+int STEPR = 4;
+int DIRR = 15;
+
 String htmlTemplate = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
   "<link rel=\"icon\" href=\"data:,\">"
   "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}"
@@ -63,50 +74,63 @@ void setup() {
 
 
 //Vorwärtsfahren
-void moveForward()
-{
-    int steps = 200; // Anzahl der schritte
-    stepper1.move(-steps);
-    stepper2.move(-steps);
-    stepper1.run();
-    stepper2.run();
+void moveForward() {
+  digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
+  digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
+  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+    digitalWrite(STEPL, HIGH);
+    digitalWrite(STEPR, HIGH);
+    delayMicroseconds(70);
+    digitalWrite(STEPL, LOW);
+    digitalWrite(STEPR, LOW);
+    delayMicroseconds(70);
+  }
 }
 
-
 //Rechtedrehung 90°
-void turnRight()
-{
-    int steps = 200; // Anzahl der Schritte um 90° nach rechts zu drehen
-    stepper1.move(steps);
-    stepper2.move(-steps);
-    stepper1.run();
-    stepper2.run();
+void turnRight() {
+  digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
+  digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
+  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+    digitalWrite(STEPL, HIGH);
+    digitalWrite(STEPR, HIGH);
+    delayMicroseconds(70);
+    digitalWrite(STEPL, LOW);
+    digitalWrite(STEPR, LOW);
+    delayMicroseconds(70);
+  }
 }
 
 //Linksdrehung 90°
-void turnLeft()
-{
-
-    int steps = 200; //Anzahl der Schritte um 90° nach links zu drehen 
-    stepper1.move(-steps);
-    stepper2.move(steps);
-    stepper1.run();
-    stepper2.run();
+void turnLeft() {
+  digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
+  digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
+  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+    digitalWrite(STEPL, HIGH);
+    digitalWrite(STEPR, HIGH);
+    delayMicroseconds(70);
+    digitalWrite(STEPL, LOW);
+    digitalWrite(STEPR, LOW);
+    delayMicroseconds(70);
+  }
 }
 
 //Rückwärtsfahren falls von nöten
-void moveBackward()
-{
-    int steps = 50000; //Anzahl der Schritte
-    stepper1.move(steps);
-    stepper2.move(steps);
-    stepper1.run();
-    stepper2.run();
+void moveBackward() {
+  digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
+  digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
+  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+    digitalWrite(STEPL, HIGH);
+    digitalWrite(STEPR, HIGH);
+    delayMicroseconds(70);
+    digitalWrite(STEPL, LOW);
+    digitalWrite(STEPR, LOW);
+    delayMicroseconds(70);
+  }
 }
-
-void stopMotors() {
-  stepper1.stop();
-  stepper2.stop();
+void stopMovement() {
+  digitalWrite(STEPL, LOW);
+  digitalWrite(STEPR, LOW);
 }
 
 void loop() {
@@ -183,7 +207,7 @@ void loop() {
             }
             
             if (stopState == "on"){
-              stopMotors();
+              stopMovement();
             }
 
             String response = htmlTemplate;
