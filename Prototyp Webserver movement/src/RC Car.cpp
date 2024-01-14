@@ -110,7 +110,8 @@ void stopMotors() {
 }
 
 void loop() {
-  WiFiClient client = server.available();
+  while (1)
+{  WiFiClient client = server.available();
 
   if (client) {
     currentTime = millis();
@@ -239,4 +240,5 @@ void loop() {
     Serial.println("Client disconnected.");
     Serial.println("");
   }
+}
 }
