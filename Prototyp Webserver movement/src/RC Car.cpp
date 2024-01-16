@@ -192,22 +192,27 @@ void loop() {
 
             if (forwardState == "on"){
               moveForward();
+            Serial.print("Vor");
             }
 
             if (backwardsState == "on"){
               moveBackward();
+              Serial.print("Rückwärts");
             }
 
             if (leftState == "on"){
               turnLeft();
+            Serial.print("Links");              
             }
 
             if (rightState == "on"){ 
               turnRight();
+            Serial.print("Rechts");
             }
             
             if (stopState == "on"){
               stopMovement();
+            Serial.print("Stopp");
             }
 
             String response = htmlTemplate;
