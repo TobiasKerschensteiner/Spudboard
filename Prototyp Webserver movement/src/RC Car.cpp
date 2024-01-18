@@ -16,9 +16,21 @@ String leftState = "off";
 String rightState = "off";
 String stopState = "off";
 
+#define FULLSTEP 4
+#define HALFSTEP 8
 //pin belegung
-AccelStepper stepper1(AccelStepper::FULL4WIRE, 17, 18, 5, 16); //(Wenn + rück wenn - vor)
-AccelStepper stepper2(AccelStepper::FULL4WIRE, 26, 14, 27, 12); //(Wenn + rück wenn - vor)
+AccelStepper stepper1(HALFSTEP, 17, 18, 5, 16);  
+AccelStepper stepper2(HALFSTEP, 26, 14, 27, 12);
+const short fullRevolution = 2048;
+const float SteppDegree = 11.32;
+int maxstepperSpeed = 2000;
+int stepperSpeed = 200;
+int stepperBesch = 100;
+int sensor = 15;
+
+
+boolean turn1 = true; //track ob wir gerade fahren oder in einer Kurve
+boolean turn2 = true;
 
 MultiStepper steppers;
 
@@ -58,80 +70,135 @@ void setup() {
   Serial.println(WiFi.localIP());
   server.begin();
     // Max Geschwindigkeit soll nicht mehr als 2000 betragen
-  stepper1.setMaxSpeed(200);
-  stepper2.setMaxSpeed(200);
+  // stepper1.setMaxSpeed(200);
+  // stepper2.setMaxSpeed(200);
 
-  //sanfter anlauf
-  stepper1.setAcceleration(100);
-  stepper2.setAcceleration(100);
+  // //sanfter anlauf
+  // stepper1.setAcceleration(100);
+  // stepper2.setAcceleration(100);
 
-  //Stepper zusammen fügen. Geht bis zu Max 10
-  steppers.addStepper(stepper1);
-  steppers.addStepper(stepper2);
+  // //Stepper zusammen fügen. Geht bis zu Max 10
+  // steppers.addStepper(stepper1);
+  // steppers.addStepper(stepper2);
+  delay(3000);
 
+  stepper1.setMaxSpeed(maxstepperSpeed);
+  stepper1.move(1);
+  stepper1.setAcceleration(stepperBesch);
+  stepper1.setSpeed(stepperSpeed);
+  stepper1.setCurrentPosition(0);
+
+  stepper2.setMaxSpeed(maxstepperSpeed);
+  stepper2.move(-1);
+  stepper2.setAcceleration(stepperBesch);
+  stepper2.setSpeed(stepperSpeed);
+  stepper2.setCurrentPosition(0);
+}
+
+void turnRight()
+{
+  float degree = 180;
+  float moveRev = degree * SteppDegree;
+  stepper1.moveTo(moveRev);
+  stepper1.run();
+  stepper2.moveTo(-moveRev);
+  stepper2.run();
+}
+
+void turnLeft()
+{
+  float degree = 180;
+  float moveRev = degree * SteppDegree;
+  stepper1.moveTo(-moveRev);
+  stepper1.run();
+  stepper2.moveTo(moveRev);
+  stepper2.run();
+}
+
+void moveForward()
+{
+  stepper1.moveTo(100);
+  stepper1.run();
+  stepper2.moveTo(100);
+  stepper2.run();
+}
+
+void stopMovement()
+{
+  stepper1.stop();
+  stepper2.stop();
+}
+//hhjj
+void moveBackward()
+{
+  stepper1.moveTo(-100);
+  stepper1.run();
+  stepper2.moveTo(-100);
+  stepper2.run();
 }
 
 
 
-//Vorwärtsfahren
-void moveForward() {
-  digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
-  digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
-  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
-    digitalWrite(STEPL, HIGH);
-    digitalWrite(STEPR, HIGH);
-    delayMicroseconds(70);
-    digitalWrite(STEPL, LOW);
-    digitalWrite(STEPR, LOW);
-    delayMicroseconds(70);
-  }
-}
 
-//Rechtedrehung 90°
-void turnRight() {
-  digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
-  digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
-  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
-    digitalWrite(STEPL, HIGH);
-    digitalWrite(STEPR, HIGH);
-    delayMicroseconds(70);
-    digitalWrite(STEPL, LOW);
-    digitalWrite(STEPR, LOW);
-    delayMicroseconds(70);
-  }
-}
+// //Vorwärtsfahren
+// void moveForward() {
+//   digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
+//   digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
+//   for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+//     digitalWrite(STEPL, HIGH);
+//     digitalWrite(STEPR, HIGH);
+//     delayMicroseconds(70);
+//     digitalWrite(STEPL, LOW);
+//     digitalWrite(STEPR, LOW);
+//     delayMicroseconds(70);
+//   }
+// }
 
-//Linksdrehung 90°
-void turnLeft() {
-  digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
-  digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
-  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
-    digitalWrite(STEPL, HIGH);
-    digitalWrite(STEPR, HIGH);
-    delayMicroseconds(70);
-    digitalWrite(STEPL, LOW);
-    digitalWrite(STEPR, LOW);
-    delayMicroseconds(70);
-  }
-}
+// //Rechtedrehung 90°
+// void turnRight() {
+//   digitalWrite(DIRL, HIGH); // im Uhrzeigersinn
+//   digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
+//   for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+//     digitalWrite(STEPL, HIGH);
+//     digitalWrite(STEPR, HIGH);
+//     delayMicroseconds(70);
+//     digitalWrite(STEPL, LOW);
+//     digitalWrite(STEPR, LOW);
+//     delayMicroseconds(70);
+//   }
+// }
 
-//Rückwärtsfahren falls von nöten
-void moveBackward() {
-  digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
-  digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
-  for(stepCounter = 0; stepCounter < steps; stepCounter++) {
-    digitalWrite(STEPL, HIGH);
-    digitalWrite(STEPR, HIGH);
-    delayMicroseconds(70);
-    digitalWrite(STEPL, LOW);
-    digitalWrite(STEPR, LOW);
-    delayMicroseconds(70);
-  }
-}
-void stopMovement() {
-  digitalWrite(STEPL, LOW);
-  digitalWrite(STEPR, LOW);
-}
+// //Linksdrehung 90°
+// void turnLeft() {
+//   digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
+//   digitalWrite(DIRR, HIGH); // im Uhrzeigersinn  
+//   for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+//     digitalWrite(STEPL, HIGH);
+//     digitalWrite(STEPR, HIGH);
+//     delayMicroseconds(70);
+//     digitalWrite(STEPL, LOW);
+//     digitalWrite(STEPR, LOW);
+//     delayMicroseconds(70);
+//   }
+// }
+
+// //Rückwärtsfahren falls von nöten
+// void moveBackward() {
+//   digitalWrite(DIRL, LOW); // gegen den Uhrzeigersinn
+//   digitalWrite(DIRR, LOW); // gegen den Uhrzeigersinn  
+//   for(stepCounter = 0; stepCounter < steps; stepCounter++) {
+//     digitalWrite(STEPL, HIGH);
+//     digitalWrite(STEPR, HIGH);
+//     delayMicroseconds(70);
+//     digitalWrite(STEPL, LOW);
+//     digitalWrite(STEPR, LOW);
+//     delayMicroseconds(70);
+//   }
+// }
+// void stopMovement() {
+//   digitalWrite(STEPL, LOW);
+//   digitalWrite(STEPR, LOW);
+// }
 
 void loop() {
   while (1)
