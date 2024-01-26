@@ -2,8 +2,8 @@
 #include <WebServer.h>
 
 // Netzwerkinformationen
-const char* ssid = "IhrNetzwerkname";
-const char* password = "IhrPasswort";
+const char* ssid = "Alpakhan";
+const char* password = "Bananenmus";
 
 WebServer server(80);
 
@@ -16,11 +16,21 @@ bool roboterInBetrieb = false;
 int tafelBreite = 0;
 int tafelHoehe = 0;
 
-// Motorsteuerungspins
-const int motorLinksVorwaerts = D1;
-const int motorRechtsVorwaerts = D2;
+// Definition der Motorsteuerungspins
+const int ENABLEL = 18;
+const int STEPL = 5;
+const int DIRL = 17;
+
+const int ENABLER = 18;
+const int STEPR = 4;
+const int DIRR = 15;
+
+const int Sensor = 21;
+const int Wisch = 19;
+
 
 // Position und Ausrichtung
+int steps = 10; // Anzahl der Schritte pro Bewegung
 int aktuellePositionX = 0;
 int aktuellePositionY = 0;
 enum Ausrichtung { NORDEN, OSTEN, SUEDEN, WESTEN };
@@ -41,17 +51,45 @@ void setup() {
     server.on("/", handleRoot);
     server.on("/setModus", setModus);
     server.on("/stopp", handleStopp);
-    server.begin();
 
-    pinMode(motorLinksVorwaerts, OUTPUT);
-    pinMode(motorRechtsVorwaerts, OUTPUT);
+    pinMode(Wisch, OUTPUT);
+    pinMode(Sensor, INPUT);
+    pinMode(ENABLEL, OUTPUT);
+    pinMode(STEPL, OUTPUT);
+    pinMode(DIRL, OUTPUT);
+    digitalWrite(ENABLEL, LOW);
+
+    pinMode(ENABLER, OUTPUT);
+    pinMode(STEPR, OUTPUT);
+    pinMode(DIRR, OUTPUT);
+    digitalWrite(ENABLER, LOW);
+
+    Serial.begin(9600);
 }
 
 
 
 void handleRoot() {
-    char html[4000];
-    snprintf(html, 4000,
+    char tafelViertelButtons[1000] = "";
+    char stopButton[200] = "";
+
+    if (tafelBreite > 0 && tafelHoehe > 0) {
+        snprintf(tafelViertelButtons, sizeof(tafelViertelButtons),
+                 "<div class='tafel'>"
+                 "<button onclick=\"location.href='/setModus?modus=2'\">Viertel 1</button>"
+                 "<button onclick=\"location.href='/setModus?modus=3'\">Viertel 2</button>"
+                 "<button onclick=\"location.href='/setModus?modus=4'\">Viertel 3</button>"
+                 "<button onclick=\"location.href='/setModus?modus=5'\">Viertel 4</button>"
+                 "</div>");
+    }
+
+    if (roboterInBetrieb) {
+        snprintf(stopButton, sizeof(stopButton),
+                 "<button class='button' onclick=\"location.href='/stopp'\">Stopp</button>");
+    }
+
+    char html[5000];
+    snprintf(html, sizeof(html),
              "<html><head><title>Tafelwischroboter Steuerung</title><style>"
              ".button { background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; }"
              ".tafel { width: 300px; height: 200px; border: 1px solid black; display: flex; flex-wrap: wrap; }"
@@ -64,20 +102,15 @@ void handleRoot() {
              "<h1>Tafelwischroboter Steuerung</h1>"
              "<button class='button' onclick=\"location.href='/setModus?modus=1'\">Standardroute</button>"
              "<button class='button' onclick=\"location.href='/setModus?modus=6'\">Kalibrieren</button>"
-             "%s" // Platzhalter für Tafelviertel-Knöpfe
-             "%s" // Platzhalter für den Stopp-Knopf
+             "%s" // Tafelviertel-Knöpfe
+             "%s" // Stopp-Knopf
              "<div class='battery'><div class='battery-level' style='width:%d%%;'></div></div>"
              "<span>Akku: %d%%</span>"
              "<div class='status-box'>Status: %s</div>"
              "</body></html>",
              akkustand,
-             tafelBreite > 0 && tafelHoehe > 0 ? "<div class='tafel'>"
-             "<button onclick=\"location.href='/setModus?modus=2'\">Viertel 1</button>"
-             "<button onclick=\"location.href='/setModus?modus=3'\">Viertel 2</button>"
-             "<button onclick=\"location.href='/setModus?modus=4'\">Viertel 3</button>"
-             "<button onclick=\"location.href='/setModus?modus=5'\">Viertel 4</button>"
-             "</div>" : "",
-             roboterInBetrieb ? "<button class='button' onclick=\"location.href='/stopp'\">Stopp</button>" : "",
+             tafelViertelButtons,
+             stopButton,
              akkustand, akkustand, modus == 0 ? "Standby" : "Aktiv");
     server.send(200, "text/html", html);
 }
@@ -95,6 +128,26 @@ void setModus() {
         server.send(400, "text/plain", "Fehlender Modus Parameter");
     }
 }
+void move(bool richtung) {
+    digitalWrite(DIRL, richtung); // Richtung für linken Motor
+    digitalWrite(DIRR, richtung); // Richtung für rechten Motor
+
+    for (int stepCounter = 0; stepCounter < steps; stepCounter++) {
+        digitalWrite(STEPL, HIGH);
+        digitalWrite(STEPR, HIGH);
+        delayMicroseconds(70);
+        digitalWrite(STEPL, LOW);
+        digitalWrite(STEPR, LOW);
+        delayMicroseconds(70);
+            // Aktualisiere die Position basierend auf der aktuellen Ausrichtung
+    switch (aktuelleAusrichtung) {
+        case NORDEN: aktuellePositionY++; break;
+        case SUEDEN: aktuellePositionY--; break;
+        case OSTEN: aktuellePositionX++; break;
+        case WESTEN: aktuellePositionX--; break;
+    }
+    }
+    }
 
 void handleStopp() {
     modus = 0;
@@ -106,37 +159,38 @@ void handleStopp() {
 
 void fahreVorwaerts(int schritte) {
     for (int i = 0; i < schritte; i++) {
-        digitalWrite(motorLinksVorwaerts, HIGH);
-        digitalWrite(motorRechtsVorwaerts, HIGH);
-        delay(1000); // Dauer für einen Schritt, anpassen
-        digitalWrite(motorLinksVorwaerts, LOW);
-        digitalWrite(motorRechtsVorwaerts, LOW);
-        delay(500); // Kurze Pause zwischen den Schritten
-
-        // Aktualisiere die Position basierend auf der aktuellen Ausrichtung
-        switch (aktuelleAusrichtung) {
-            case NORDEN: aktuellePositionY++; break;
-            case SUEDEN: aktuellePositionY--; break;
-            case OSTEN: aktuellePositionX++; break;
-            case WESTEN: aktuellePositionX--; break;
-        }
+        move(true); // Vorwärtsbewegung
+        digitalWrite(Wisch, HIGH); // Aktiviere den Wischmotor
     }
+    digitalWrite(Wisch, LOW); // Deaktiviere den Wischmotor
 }
 
 void dreheRechts() {
-    // Beispiel: Nur den linken Motor aktivieren für eine Drehung
-    digitalWrite(motorLinksVorwaerts, HIGH);
-    delay(1000); // Dauer der Drehung, anpassen
-    digitalWrite(motorLinksVorwaerts, LOW);
+    // Drehe den Roboter nach rechts
+    digitalWrite(DIRL, HIGH); // Ändere Richtung des linken Motors
+    digitalWrite(DIRR, LOW);  // Beibehaltung der Richtung des rechten Motors
+    move(false); // Ein Schritt für die Drehung
+}
 
-    // Aktualisiere die Ausrichtung beim Drehen
-    aktuelleAusrichtung = static_cast<Ausrichtung>((aktuelleAusrichtung + 1) % 4);
+void dreheLinks() {
+    // Drehe den Roboter nach links
+    digitalWrite(DIRL, LOW);  // Beibehaltung der Richtung des linken Motors
+    digitalWrite(DIRR, HIGH); // Ändere Richtung des rechten Motors
+    move(false); // Ein Schritt für die Drehung
 }
 
 bool pruefeKante() {
-    // Beispiel: Verwenden eines fiktiven Kanten-Sensors
-    // return digitalRead(kantenSensorPin) == HIGH;
-    return false; // Standardmäßig false, bis implementiert
+    // Lese den Sensorwert und prüfe, ob eine Kante erreicht wurde
+    return digitalRead(Sensor) == HIGH;
+}
+
+void fahreVorwaerts(int schritte) {
+    for (int i = 0; i < schritte; i++) {
+        move(true); // Vorwärtsbewegung
+        digitalWrite(Wisch, HIGH); // Aktiviere den Wischmotor während der Bewegung
+        delay(1000); // Pausiere kurz, um dem Wischmotor Zeit zum Arbeiten zu geben
+    }
+    digitalWrite(Wisch, LOW); // Deaktiviere den Wischmotor
 }
 
 void kalibrieren() {
@@ -204,30 +258,54 @@ void zurueckZurStartposition() {
     aktuellePositionX = 0;
     aktuellePositionY = 0;
 }
-void wischeViertel(int start_x, int start_y, int breite, int hoehe) {
-    // Setze den Roboter auf die Startposition des Viertels
-    // Hier wird angenommen, dass der Roboter sich horizontal und vertikal bewegen kann
-    // Bewegung zur Startposition (start_x, start_y)
-    
-    int ende_x = start_x + breite;
-    int ende_y = start_y + hoehe;
+void bewegeZuStartpositionViertel(int start_x, int start_y) {
+    // Angenommen, der Roboter startet an der allgemeinen Startposition (0, 0)
 
-    // Wische das Viertel in einem ähnlichen Muster wie die Standardroute
-    for (int x = start_x; x < ende_x; x += roboterGroesse) {
-        // Fahre vertikal nach oben
-        for (int y = start_y; y < ende_y; y++) {
-            // Bewegungslogik nach oben
-        }
-        // Fahre einen Schritt nach rechts
-        // Bewegungslogik nach rechts
+    // Setze die Ausrichtung des Roboters
+    aktuelleAusrichtung = OSTEN; // Richtung nach Osten für horizontale Bewegung
 
-        // Fahre vertikal nach unten
-        for (int y = ende_y; y > start_y; y--) {
-            // Bewegungslogik nach unten
-        }
-        // Fahre einen Schritt nach rechts
-        // Bewegungslogik nach rechts
+    // Fahre horizontal zur x-Position des Viertels
+    while (aktuellePositionX < start_x) {
+        fahreVorwaerts(1); // Ein Schritt nach rechts
     }
+
+    // Ändere die Richtung nach Norden für vertikale Bewegung
+    dreheLinks();
+    aktuelleAusrichtung = NORDEN;
+
+    // Fahre vertikal zur y-Position des Viertels
+    while (aktuellePositionY < start_y) {
+        fahreVorwaerts(1); // Ein Schritt nach oben
+    }
+
+    // Setze die Ausrichtung zurück
+    aktuelleAusrichtung = OSTEN;
+}
+
+void zurueckZurAllgemeinenStartposition() {
+    // Angenommen, der Roboter befindet sich an der Startposition eines Viertels
+
+    // Setze die Ausrichtung des Roboters
+    aktuelleAusrichtung = WESTEN; // Richtung nach Westen für horizontale Bewegung
+
+    // Fahre horizontal zurück zur allgemeinen Startposition (0,0)
+    while (aktuellePositionX > 0) {
+        fahreVorwaerts(1); // Ein Schritt nach links
+    }
+
+    // Ändere die Richtung nach Süden für vertikale Bewegung
+    dreheLinks();
+    aktuelleAusrichtung = SUEDEN;
+
+    // Fahre vertikal zurück zur allgemeinen Startposition (0,0)
+    while (aktuellePositionY > 0) {
+        fahreVorwaerts(1); // Ein Schritt nach unten
+    }
+
+    // Setze die Ausrichtung und Position zurück
+    aktuelleAusrichtung = OSTEN;
+    aktuellePositionX = 0;
+    aktuellePositionY = 0;
 }
 
 void wischeViertelObenLinks() {
@@ -245,6 +323,48 @@ void wischeViertelUntenLinks() {
 void wischeViertelUntenRechts() {
     wischeViertel(tafelBreite / 2, tafelHoehe / 2, tafelBreite / 2, tafelHoehe / 2);
 }
+void wischeViertel(int start_x, int start_y, int breite, int hoehe) {
+    bewegeZuStartpositionViertel(start_x, start_y);
+    // Bestimme die Endpositionen für das Viertel
+    int ende_x = start_x + breite;
+    int ende_y = start_y + hoehe;
+
+    // Setze die anfängliche Richtung: Norden (nach oben)
+    aktuelleAusrichtung = NORDEN;
+
+    // Wische das Viertel in einem Zickzack-Muster
+    for (int x = start_x; x < ende_x; x += roboterGroesse) {
+        // Fahre vertikal durch das Viertel (nach oben, dann nach unten)
+        for (int y = start_y; y < ende_y; y++) {
+            fahreVorwaerts(1); // Ein Schritt nach oben
+        }
+
+        // Prüfe, ob noch Platz für eine horizontale Bewegung nach rechts ist
+        if (x + roboterGroesse < ende_x) {
+            dreheRechts(); // Ändere Richtung nach Osten
+            fahreVorwaerts(1); // Ein Schritt nach rechts
+            dreheLinks();  // Richtung wieder nach Norden ändern
+
+            // Fahre zurück nach unten
+            for (int y = ende_y; y > start_y; y--) {
+                fahreVorwaerts(1); // Ein Schritt nach unten
+            }
+
+            // Prüfe erneut, ob Platz für eine weitere horizontale Bewegung nach rechts ist
+            if (x + 2 * roboterGroesse < ende_x) {
+                dreheRechts(); // Ändere Richtung nach Osten
+                fahreVorwaerts(1); // Ein weiterer Schritt nach rechts
+                dreheLinks();  // Richtung wieder nach Norden ändern
+            }
+        }
+    }
+    // Bewege den Roboter zurück zur allgemeinen Startposition
+    zurueckZurAllgemeinenStartposition();
+}
+
+
+
+
 void loop() {
     server.handleClient();
 
