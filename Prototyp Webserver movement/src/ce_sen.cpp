@@ -1,9 +1,3 @@
-/*
-Hilfe:
-https://cool-web.de/arduino/multi-function-shield-step-motor.htm
-https://www.airspayce.com/mikem/arduino/AccelStepper/
-*/
-
 #include <Arduino.h>
 #include <AccelStepper.h>
 
@@ -17,102 +11,78 @@ int stepperSpeed = 200;
 int stepperBesch = 100;
 int sensor = 15;
 
-
-//pin belegung
+// Pinbelegung
 AccelStepper stepper1(HALFSTEP, 17, 18, 5, 16);  
 AccelStepper stepper2(HALFSTEP, 26, 14, 27, 12);
 
-boolean turn1 = true; //track ob wir gerade fahren oder in einer Kurve
-boolean turn2 = true;
+enum MovementState { FORWARD, TURN_RIGHT, TURN_LEFT, STOPPED };
+MovementState currentState = STOPPED;
 
-void setup(void)
-{
+void setup(void) {
   delay(3000);
 
   stepper1.setMaxSpeed(maxstepperSpeed);
-  stepper1.move(1);
   stepper1.setAcceleration(stepperBesch);
   stepper1.setSpeed(stepperSpeed);
   stepper1.setCurrentPosition(0);
 
   stepper2.setMaxSpeed(maxstepperSpeed);
-  stepper2.move(-1);
   stepper2.setAcceleration(stepperBesch);
   stepper2.setSpeed(stepperSpeed);
   stepper2.setCurrentPosition(0);
+
+  pinMode(sensor, INPUT);
 }
 
-void turnRight()
-{
-  float degree = 180;
-  float moveRev = degree * SteppDegree;
-  stepper1.moveTo(moveRev);
-  stepper1.run();
-  stepper2.moveTo(-moveRev);
-  stepper2.run();
-}
-
-void turnleft()
-{
-  float degree = 180;
-  float moveRev = degree * SteppDegree;
-  stepper1.moveTo(-moveRev);
-  stepper1.run();
-  stepper2.moveTo(moveRev);
-  stepper2.run();
-}
-
-void turnForword()
-{
-  stepper1.moveTo(10000);
-  stepper1.run();
-  stepper2.moveTo(10000);
-  stepper2.run();
-}
-
-void stop()
-{
-  stepper1.stop();
-  stepper2.stop();
-}
-//hhjj
-
-void loop(void)
-{
-
-int sensorValue = digitalRead(sensor);
-  if(sensorValue == 0)
-  {
-    turnForword();
+void turnRight() {
+  if (currentState != TURN_RIGHT) {
+    float degree = 180;
+    float moveRev = degree * SteppDegree;
+    stepper1.moveTo(stepper1.currentPosition() + moveRev);
+    stepper2.moveTo(stepper2.currentPosition() - moveRev);
+    currentState = TURN_RIGHT;
   }
-  if(sensorValue == 1)
-  {
-    if(turn1)
-    {
-      stop();
+}
+
+void turnLeft() {
+  if (currentState != TURN_LEFT) {
+    float degree = 180;
+    float moveRev = degree * SteppDegree;
+    stepper1.moveTo(stepper1.currentPosition() - moveRev);
+    stepper2.moveTo(stepper2.currentPosition() + moveRev);
+    currentState = TURN_LEFT;
+  }
+}
+
+void turnForward() {
+  if (currentState != FORWARD) {
+    stepper1.moveTo(stepper1.currentPosition() + 10000);
+    stepper2.moveTo(stepper2.currentPosition() + 10000);
+    currentState = FORWARD;
+  }
+}
+
+void stopMotors() {
+  if (currentState != STOPPED) {
+    stepper1.stop();
+    stepper2.stop();
+    currentState = STOPPED;
+  }
+}
+
+void loop(void) {
+  int sensorValue = digitalRead(sensor);
+
+  stepper1.run();
+  stepper2.run();
+
+  if (sensorValue == 0 && !stepper1.isRunning() && !stepper2.isRunning()) {
+    turnForward();
+  } else if (sensorValue == 1) {
+    if (currentState == FORWARD) {
+      stopMotors();
       delay(100);
+      turnRight(); // Sie können dies in turnLeft() ändern, je nach Bedarf
     }
-    else if(turn2)
-    {
-      float degree = 180;
-      float moveRev = degree * SteppDegree;
-      stepper1.moveTo(-moveRev);
-      stepper1.run();
-      stepper2.moveTo(moveRev);
-      stepper2.run();
-    }
-  
-    // toggeln 
-    if(turn1)
-    {
-      turn1 = false;
-      turn2 = true;
-    }
-    else if(turn2)
-    {
-      turn2 = false;
-    }
-
   }
 }
-
