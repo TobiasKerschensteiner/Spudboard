@@ -7,6 +7,7 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 #include <Arduino.h>
 #include <AccelStepper.h>
 
+
 #define HALFSTEP 8
 
 //pin belegung
@@ -17,9 +18,10 @@ AccelStepper stepper2(HALFSTEP, 26, 14, 27, 12);
 int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
 int stepperSpeed = 1000; //Geschwindigkeit
 int turnSteps = 2100; //anzahl an schritten für eine 90° drehung 
-int lineSteps = -2100; //Anzahl an schritte um gerade zu fahren 
 int steps1 = 0; 
 int steps2 = 0;
+int forward = 9000;
+int vers = 500;
 
 boolean turn1 = true; //track ob wir gerade fahren oder in einer Kurve
 boolean turn2 = true;
@@ -41,6 +43,7 @@ boolean turn17 = true;
 boolean turn18 = true;
 boolean turn19 = true;
 boolean turn20 = true;
+boolean turn21 = true;
  
 
 void setup() {
@@ -67,9 +70,9 @@ void loop()
   {
     if (turn1) 
     {
-      // 5000 Schritte gerade aus
-      stepper1.move(5000);
-      stepper2.move(5000);
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
     } 
     else if (turn2) 
     {
@@ -79,9 +82,9 @@ void loop()
     } 
     else if (turn3) 
     {
-      // 9000 Schritte gerade aus
-      stepper1.move(9000);
-      stepper2.move(9000);
+      // kleiner versatzt nach rechts
+      stepper1.move(vers);
+      stepper2.move(vers);
     } 
     else if (turn4) 
     {
@@ -91,21 +94,21 @@ void loop()
     } 
     else if (turn5) 
     {
-      // 200 Schritte gerade aus
-      stepper1.move(1000);
-      stepper2.move(1000);
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
     } 
     else if (turn6) 
     {
-      // 90° Drehung nach rechts
-      stepper1.move(turnSteps);
-      stepper2.move(-turnSteps);
+      // 90° Drehung nach links
+      stepper1.move(-turnSteps);
+      stepper2.move(turnSteps);
     } 
     else if (turn7) 
     {
-      // 9000 Schritte gerade aus
-      stepper1.move(9000);
-      stepper2.move(9000);
+      // kleiner versatzt nach rechts
+      stepper1.move(vers);
+      stepper2.move(vers);
     } 
     else if (turn8) 
     {
@@ -115,66 +118,83 @@ void loop()
     } 
     else if (turn9) 
     {
-      // 200 Schritte gerade aus
-      stepper1.move(1000);
-      stepper2.move(1000);
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
     }
     else if (turn10)
     {
-      // 90° Drehung nach links
-      stepper1.move(-turnSteps);
-      stepper2.move(turnSteps);
+      // 90° Drehung nach rechts
+      stepper1.move(turnSteps);
+      stepper2.move(-turnSteps);
     }
     else if (turn11)
     {
-      stepper1.move(9000);
-      stepper2.move(9000);
+      // kleiner versatzt nach rechts
+      stepper1.move(vers);
+      stepper2.move(vers);
     }
     else if (turn12)
     {
+      // 90° Drehung nach rechts
       stepper1.move(turnSteps);
       stepper2.move(-turnSteps);
     }
     else if (turn13)
     {
-      stepper1.move(1000);
-      stepper2.move(1000);
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
     }
     else if (turn14)
     {
-      stepper1.move(turnSteps);
-      stepper2.move(-turnSteps);
+      // 90° Drehung nach links
+      stepper1.move(-turnSteps);
+      stepper2.move(turnSteps);
     }
     else if (turn15)
     {
-      stepper1.move(9000);
-      stepper2.move(9000);
+      //kleiner versatzt nach rechts
+      stepper1.move(vers);
+      stepper2.move(vers);
     }
     else if (turn16)
     {
+      // 90° Drehung nach links
       stepper1.move(-turnSteps);
       stepper2.move(turnSteps);
     }
     else if (turn17)
     {
-      stepper1.move(1000);
-      stepper2.move(1000);
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
     }
     else if (turn18)
     {
-      stepper1.move(-turnSteps);
-      stepper2.move(turnSteps);
-    }
-    else if (turn19)
-    {
-      stepper1.move(9000);
-      stepper2.move(9000);
-    }
-    else if (turn20)
-    {
+      // 90° Drehung nach rechts
       stepper1.move(turnSteps);
       stepper2.move(-turnSteps);
     }
+    else if (turn19)
+    {
+      // kleiner versatzt nach rechts
+      stepper1.move(vers);
+      stepper2.move(vers);
+    }
+    else if (turn20)
+    {
+      // 90° Drehung nach rechts
+      stepper1.move(turnSteps);
+      stepper2.move(-turnSteps);
+    }
+    else if (turn21)
+    {
+      // Fährt gerade aus
+      stepper1.move(forward);
+      stepper2.move(forward);
+    }
+    
 
 
     // Setzen der Geschwindigkeit
@@ -281,6 +301,11 @@ void loop()
     else if (turn20)
     {
       turn20 = false;
+      turn21 = true;
+    }
+    else if (turn21)
+    {
+      turn21 = false;
     }
   }
   
