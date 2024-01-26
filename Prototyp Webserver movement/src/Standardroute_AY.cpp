@@ -86,8 +86,8 @@ int turnSteps = 4200; //anzahl an schritten für eine 90° drehung
 //Variablen
 int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
 int stepperSpeed = 1000; //Geschwindigkeit
-int turnSteps = 4200; //anzahl an schritten für eine 90° drehung 
-
+int turnSteps = 2100; //anzahl an schritten für eine 90° drehung 
+int lineSteps = -2100; //Anzahl an Schrritte um gerade zu fahren
 void setup(){
   Serial.begin(9600);
   Serial.print("Connecting to ");
