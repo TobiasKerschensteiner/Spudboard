@@ -4,7 +4,6 @@
 #define FULLSTEP 4
 #define HALFSTEP 8
 
-const short fullRevolution = 2048;
 const float SteppDegree = 11.32;
 int maxstepperSpeed = 2000;
 int stepperSpeed = 200;
@@ -15,7 +14,7 @@ int sensor = 15;
 AccelStepper stepper1(HALFSTEP, 17, 18, 5, 16);  
 AccelStepper stepper2(HALFSTEP, 26, 14, 27, 12);
 
-enum MovementState { FORWARD, TURN_RIGHT, TURN_LEFT, STOPPED };
+enum MovementState { FORWARD, TURNING, STOPPED };
 MovementState currentState = STOPPED;
 
 void setup(void) {
@@ -34,30 +33,21 @@ void setup(void) {
   pinMode(sensor, INPUT);
 }
 
-void turnRight() {
-  if (currentState != TURN_RIGHT) {
-    float degree = 180;
+void turn(int direction) {
+  // Richtung: 1 für Rechtsdrehung, -1 für Linksdrehung
+  if (currentState != TURNING) {
+    float degree = 90; // Winkel für Drehung
     float moveRev = degree * SteppDegree;
-    stepper1.moveTo(stepper1.currentPosition() + moveRev);
-    stepper2.moveTo(stepper2.currentPosition() - moveRev);
-    currentState = TURN_RIGHT;
+    stepper1.moveTo(stepper1.currentPosition() + direction * moveRev);
+    stepper2.moveTo(stepper2.currentPosition() - direction * moveRev);
+    currentState = TURNING;
   }
 }
 
-void turnLeft() {
-  if (currentState != TURN_LEFT) {
-    float degree = 180;
-    float moveRev = degree * SteppDegree;
-    stepper1.moveTo(stepper1.currentPosition() - moveRev);
-    stepper2.moveTo(stepper2.currentPosition() + moveRev);
-    currentState = TURN_LEFT;
-  }
-}
-
-void turnForward() {
+void forward() {
   if (currentState != FORWARD) {
-    stepper1.moveTo(stepper1.currentPosition() + 10000);
-    stepper2.moveTo(stepper2.currentPosition() + 10000);
+    stepper1.moveTo(stepper1.currentPosition() + 2000); // Wert für Vorwärtsbewegung
+    stepper2.moveTo(stepper2.currentPosition() + 2000);
     currentState = FORWARD;
   }
 }
@@ -77,12 +67,12 @@ void loop(void) {
   stepper2.run();
 
   if (sensorValue == 0 && !stepper1.isRunning() && !stepper2.isRunning()) {
-    turnForward();
+    forward();
   } else if (sensorValue == 1) {
     if (currentState == FORWARD) {
       stopMotors();
       delay(100);
-      turnRight(); // Sie können dies in turnLeft() ändern, je nach Bedarf
+      turn(1); // Ändern Sie den Wert auf -1 für eine Linksdrehung
     }
   }
 }
