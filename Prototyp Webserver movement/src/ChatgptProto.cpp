@@ -39,8 +39,12 @@ Ausrichtung aktuelleAusrichtung = SUEDEN;
 // Akkustandsvariable
 int akkustand = 100; // Beispielwert für Akkustand
 
+void handleRoot();
+void setModus();
+void handleStopp();
+
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -51,6 +55,9 @@ void setup() {
     server.on("/", handleRoot);
     server.on("/setModus", setModus);
     server.on("/stopp", handleStopp);
+    // IP-Adresse im Serial Monitor ausgeben
+    Serial.print("IP-Adresse: ");
+    Serial.println(WiFi.localIP());
 
     pinMode(Wisch, OUTPUT);
     pinMode(Sensor, INPUT);
@@ -64,7 +71,6 @@ void setup() {
     pinMode(DIRR, OUTPUT);
     digitalWrite(ENABLER, LOW);
 
-    Serial.begin(9600);
 }
 
 
@@ -149,21 +155,7 @@ void move(bool richtung) {
     }
     }
 
-void handleStopp() {
-    modus = 0;
-    zurueckZurStartposition();
-    roboterInBetrieb = false;
-    server.send(200, "text/plain", "Roboter gestoppt und zurückgesetzt");
-}
 
-
-void fahreVorwaerts(int schritte) {
-    for (int i = 0; i < schritte; i++) {
-        move(true); // Vorwärtsbewegung
-        digitalWrite(Wisch, HIGH); // Aktiviere den Wischmotor
-    }
-    digitalWrite(Wisch, LOW); // Deaktiviere den Wischmotor
-}
 
 void dreheRechts() {
     // Drehe den Roboter nach rechts
@@ -192,6 +184,34 @@ void fahreVorwaerts(int schritte) {
     }
     digitalWrite(Wisch, LOW); // Deaktiviere den Wischmotor
 }
+void zurueckZurStartposition() {
+    // Drehe den Roboter zur linken Kante (Westen)
+    while (aktuelleAusrichtung != WESTEN) {
+        dreheRechts();
+    }
+
+    // Fahre zur Startposition zurück
+    fahreVorwaerts(abs(aktuellePositionX));
+    if (aktuellePositionY < 0) {
+        dreheRechts(); // Norden
+        fahreVorwaerts(abs(aktuellePositionY));
+    } else {
+        dreheLinks(); // Süden
+        fahreVorwaerts(aktuellePositionY);
+    }
+
+    // Setze die Ausrichtung und Position zurück
+    aktuelleAusrichtung = SUEDEN;
+    aktuellePositionX = 0;
+    aktuellePositionY = 0;
+}
+void handleStopp() {
+    modus = 0;
+    zurueckZurStartposition();
+    roboterInBetrieb = false;
+    server.send(200, "text/plain", "Roboter gestoppt und zurückgesetzt");
+}
+
 
 void kalibrieren() {
     // Fahre nach oben bis zur Kante
@@ -237,27 +257,7 @@ void fahreStandardroute() {
     }
 }
 
-void zurueckZurStartposition() {
-    // Drehe den Roboter zur linken Kante (Westen)
-    while (aktuelleAusrichtung != WESTEN) {
-        dreheRechts();
-    }
 
-    // Fahre zur Startposition zurück
-    fahreVorwaerts(abs(aktuellePositionX));
-    if (aktuellePositionY < 0) {
-        dreheRechts(); // Norden
-        fahreVorwaerts(abs(aktuellePositionY));
-    } else {
-        dreheLinks(); // Süden
-        fahreVorwaerts(aktuellePositionY);
-    }
-
-    // Setze die Ausrichtung und Position zurück
-    aktuelleAusrichtung = SUEDEN;
-    aktuellePositionX = 0;
-    aktuellePositionY = 0;
-}
 void bewegeZuStartpositionViertel(int start_x, int start_y) {
     // Angenommen, der Roboter startet an der allgemeinen Startposition (0, 0)
 
@@ -308,21 +308,7 @@ void zurueckZurAllgemeinenStartposition() {
     aktuellePositionY = 0;
 }
 
-void wischeViertelObenLinks() {
-    wischeViertel(0, 0, tafelBreite / 2, tafelHoehe / 2);
-}
 
-void wischeViertelObenRechts() {
-    wischeViertel(tafelBreite / 2, 0, tafelBreite / 2, tafelHoehe / 2);
-}
-
-void wischeViertelUntenLinks() {
-    wischeViertel(0, tafelHoehe / 2, tafelBreite / 2, tafelHoehe / 2);
-}
-
-void wischeViertelUntenRechts() {
-    wischeViertel(tafelBreite / 2, tafelHoehe / 2, tafelBreite / 2, tafelHoehe / 2);
-}
 void wischeViertel(int start_x, int start_y, int breite, int hoehe) {
     bewegeZuStartpositionViertel(start_x, start_y);
     // Bestimme die Endpositionen für das Viertel
@@ -361,7 +347,21 @@ void wischeViertel(int start_x, int start_y, int breite, int hoehe) {
     // Bewege den Roboter zurück zur allgemeinen Startposition
     zurueckZurAllgemeinenStartposition();
 }
+void wischeViertelObenLinks() {
+    wischeViertel(0, 0, tafelBreite / 2, tafelHoehe / 2);
+}
 
+void wischeViertelObenRechts() {
+    wischeViertel(tafelBreite / 2, 0, tafelBreite / 2, tafelHoehe / 2);
+}
+
+void wischeViertelUntenLinks() {
+    wischeViertel(0, tafelHoehe / 2, tafelBreite / 2, tafelHoehe / 2);
+}
+
+void wischeViertelUntenRechts() {
+    wischeViertel(tafelBreite / 2, tafelHoehe / 2, tafelBreite / 2, tafelHoehe / 2);
+}
 
 
 
