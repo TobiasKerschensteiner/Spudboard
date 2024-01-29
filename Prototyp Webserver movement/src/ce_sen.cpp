@@ -1,5 +1,10 @@
 #include <Arduino.h>
 #include <AccelStepper.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_GC9A01A.h>
+#include <FS.h>
+#include "SPIFFS.h"
 
 #define HALFSTEP 8
 
@@ -20,13 +25,13 @@ void setup(void) {
   delay(3000);
 
   stepper1.setMaxSpeed(maxstepperSpeed);
-  stepper1.setAcceleration(stepperBesch);
   stepper1.setSpeed(stepperSpeed);
+  stepper1.setAcceleration(stepperBesch);
   stepper1.setCurrentPosition(0);
 
   stepper2.setMaxSpeed(maxstepperSpeed);
-  stepper2.setAcceleration(stepperBesch);
   stepper2.setSpeed(stepperSpeed);
+  stepper2.setAcceleration(stepperBesch);
   stepper2.setCurrentPosition(0);
 
   pinMode(sensor, INPUT);
@@ -47,10 +52,17 @@ void turn() {
   stepper2.moveTo(stepper2.currentPosition() - moveRev);
   currentState = TURNING;
 }
+void stop() {
+  stepper1.moveTo(stepper1.currentPosition() - 600);
+  stepper2.moveTo(stepper2.currentPosition() - 600);
+
+  currentState = STOPPED;
+}
+
 
 void forwardAfterTurn() {
-  stepper1.moveTo(stepper1.currentPosition() + 1000); 
-  stepper2.moveTo(stepper2.currentPosition() + 1000);
+  stepper1.moveTo(stepper1.currentPosition() + 2000); 
+  stepper2.moveTo(stepper2.currentPosition() + 2000);
   currentState = AFTER_TURN;
 }
 
@@ -65,8 +77,11 @@ void loop(void) {
     switch (currentState) {
       case FORWARD:
         if (sensorValue == 1) { // Sensor ausgelöst
-          turn();
+          stop();
         }
+        break;
+      case STOPPED:
+            turn();
         break;
       case TURNING:
         forwardAfterTurn();
