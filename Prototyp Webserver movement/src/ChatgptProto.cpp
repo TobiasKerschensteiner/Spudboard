@@ -28,6 +28,9 @@ const int DIRR = 15;
 const int Sensor = 21;
 const int Wisch = 19;
 
+//Taster 
+const int tasterPin = 2; // Ersetzen Sie 2 durch den tatsächlichen Pin
+
 
 // Position und Ausrichtung
 int steps = 10; // Anzahl der Schritte pro Bewegung
@@ -70,6 +73,8 @@ void setup() {
     pinMode(STEPR, OUTPUT);
     pinMode(DIRR, OUTPUT);
     digitalWrite(ENABLER, LOW);
+
+    pinMode(tasterPin, INPUT_PULLUP);
 
 }
 
@@ -367,6 +372,29 @@ void wischeViertelUntenRechts() {
 
 void loop() {
     server.handleClient();
+    static bool tasterGedrueckt = false;
+    static unsigned long letzteTasterZeit = 0;
+    const unsigned long entprellZeit = 50; // Entprellzeit in Millisekunden
+
+    // Tasterstatus lesen und Entprellung
+    if (digitalRead(tasterPin) == LOW) {
+        if (!tasterGedrueckt && millis() - letzteTasterZeit > entprellZeit) {
+            if (!roboterInBetrieb) {
+                fahreStandardroute();
+                roboterInBetrieb = true;
+            } else {
+                zurueckZurAllgemeinenStartposition();
+                roboterInBetrieb = false;
+            }
+            tasterGedrueckt = true;
+            letzteTasterZeit = millis();
+        }
+    } else {
+        tasterGedrueckt = false;
+    }
+
+    // Rest Ihrer Loop...
+
 
     switch (modus) {
         case 1:  // Standardroute
