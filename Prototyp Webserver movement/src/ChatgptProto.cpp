@@ -16,6 +16,9 @@ bool roboterInBetrieb = false;
 int tafelBreite = 0;
 int tafelHoehe = 0;
 
+int aktuellerFortschritt = 0; // Aktueller Fortschritt der Reinigung
+int gesamtFlaeche = tafelBreite * tafelHoehe; // Berechnung der Gesamtfläche
+
 // Definition der Motorsteuerungspins
 const int ENABLEL = 18;
 const int STEPL = 5;
@@ -61,7 +64,7 @@ void setup() {
     // IP-Adresse im Serial Monitor ausgeben
     Serial.print("IP-Adresse: ");
     Serial.println(WiFi.localIP());
-
+    server.begin();
     pinMode(Wisch, OUTPUT);
     pinMode(Sensor, INPUT);
     pinMode(ENABLEL, OUTPUT);
@@ -81,51 +84,57 @@ void setup() {
 
 
 void handleRoot() {
-    char tafelViertelButtons[1000] = "";
-    char stopButton[200] = "";
+    // Initialisierung der HTML-Template-Teile
+    char headerTemplate[] = "<html><head><title>Tafelwischroboter Steuerung</title><style>"
+                            ".button { background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; }"
+                            ".tafel { width: 300px; height: 200px; border: 1px solid black; display: flex; flex-wrap: wrap; }"
+                            ".tafel button { width: 50%; height: 50%; }"
+                            ".battery { width: 50px; height: 20px; border: 1px solid black; position: relative; display: inline-block; vertical-align: middle; }"
+                            ".battery-level { height: 100%; background-color: green; width: %d%%; }"
+                            ".battery::after { content: ''; position: absolute; top: 4px; right: -6px; width: 5px; height: 12px; border: 1px solid black; background-color: black; }"
+                            ".status-box { border: 1px solid black; padding: 10px; margin-top: 10px; }"
+                            "</style></head><body>"
+                            "<h1>Tafelwischroboter Steuerung</h1>"
+                            "<button class='button' onclick=\"location.href='/setModus?modus=1'\">Standardroute</button>"
+                            "<button class='button' onclick=\"location.href='/setModus?modus=6'\">Kalibrieren</button>";
 
-    if (tafelBreite > 0 && tafelHoehe > 0) {
-        snprintf(tafelViertelButtons, sizeof(tafelViertelButtons),
-                 "<div class='tafel'>"
-                 "<button onclick=\"location.href='/setModus?modus=2'\">Viertel 1</button>"
-                 "<button onclick=\"location.href='/setModus?modus=3'\">Viertel 2</button>"
-                 "<button onclick=\"location.href='/setModus?modus=4'\">Viertel 3</button>"
-                 "<button onclick=\"location.href='/setModus?modus=5'\">Viertel 4</button>"
-                 "</div>");
-    }
+    char tafelViertelButtonsTemplate[] = "<div class='tafel'>"
+                                         "<button onclick=\"location.href='/setModus?modus=2'\">Viertel 1</button>"
+                                         "<button onclick=\"location.href='/setModus?modus=3'\">Viertel 2</button>"
+                                         "<button onclick=\"location.href='/setModus?modus=4'\">Viertel 3</button>"
+                                         "<button onclick=\"location.href='/setModus?modus=5'\">Viertel 4</button>"
+                                         "</div>";
 
+    char stopButtonTemplate[] = "<button class='button' onclick=\"location.href='/stopp'\">Stopp</button>";
+
+    char footerTemplate[] = "<div class='battery'><div class='battery-level' style='width:%d%%;'></div></div>"
+                            "<span>Akku: %d%%</span>"
+                            "<div class='status-box'>Status: %s</div>"
+                            "</body></html>";
+
+    // Bestimmung der Sichtbarkeit des Stopp-Knopfs und der Tafelviertel-Knöpfe basierend auf dem Betriebsstatus
+    char stopButton[256] = "";
     if (roboterInBetrieb) {
-        snprintf(stopButton, sizeof(stopButton),
-                 "<button class='button' onclick=\"location.href='/stopp'\">Stopp</button>");
+        strcpy(stopButton, stopButtonTemplate);
     }
 
-    char html[5000];
-    snprintf(html, sizeof(html),
-             "<html><head><title>Tafelwischroboter Steuerung</title><style>"
-             ".button { background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; }"
-             ".tafel { width: 300px; height: 200px; border: 1px solid black; display: flex; flex-wrap: wrap; }"
-             ".tafel button { width: 50%; height: 50%; }"
-             ".battery { width: 50px; height: 20px; border: 1px solid black; position: relative; display: inline-block; vertical-align: middle; }"
-             ".battery-level { height: 100%; background-color: green; width: %d%%; }"
-             ".battery::after { content: ''; position: absolute; top: 4px; right: -6px; width: 5px; height: 12px; border: 1px solid black; background-color: black; }"
-             ".status-box { border: 1px solid black; padding: 10px; margin-top: 10px; }"
-             "</style></head><body>"
-             "<h1>Tafelwischroboter Steuerung</h1>"
-             "<button class='button' onclick=\"location.href='/setModus?modus=1'\">Standardroute</button>"
-             "<button class='button' onclick=\"location.href='/setModus?modus=6'\">Kalibrieren</button>"
-             "%s" // Tafelviertel-Knöpfe
-             "%s" // Stopp-Knopf
-             "<div class='battery'><div class='battery-level' style='width:%d%%;'></div></div>"
-             "<span>Akku: %d%%</span>"
-             "<div class='status-box'>Status: %s</div>"
-             "</body></html>",
-             akkustand,
-             tafelViertelButtons,
+    int fortschrittsProzent = (aktuellerFortschritt * 100) / gesamtFlaeche; // Umwandlung in Prozent
+    char fortschrittsAnzeige[100];
+    snprintf(fortschrittsAnzeige, sizeof(fortschrittsAnzeige), "<div>Fortschritt: %d%%</div>", fortschrittsProzent);
+
+    // Zusammenstellung des finalen HTML-Codes
+    char html[8192];
+    snprintf(html, sizeof(html), "%s%s%s<div class='battery'><div class='battery-level' style='width:%d%%;'></div></div><span>Akku: %d%%</span><div class='status-box'>Status: %s</div>%s</body></html>",
+             headerTemplate,
+             tafelViertelButtonsTemplate,
              stopButton,
-             akkustand, akkustand, modus == 0 ? "Standby" : "Aktiv");
+             akkustand, 
+             akkustand,
+             modus == 0 ? "Standby" : "Aktiv",
+             fortschrittsAnzeige);
+
     server.send(200, "text/html", html);
 }
-
 
 void setModus() {
     if (server.hasArg("modus")) {
@@ -372,29 +381,26 @@ void wischeViertelUntenRechts() {
 
 void loop() {
     server.handleClient();
+
+    // Tasterlogik und Modussteuerung
     static bool tasterGedrueckt = false;
     static unsigned long letzteTasterZeit = 0;
     const unsigned long entprellZeit = 50; // Entprellzeit in Millisekunden
 
     // Tasterstatus lesen und Entprellung
-    if (digitalRead(tasterPin) == LOW) {
-        if (!tasterGedrueckt && millis() - letzteTasterZeit > entprellZeit) {
-            if (!roboterInBetrieb) {
-                fahreStandardroute();
-                roboterInBetrieb = true;
-            } else {
-                zurueckZurAllgemeinenStartposition();
-                roboterInBetrieb = false;
-            }
-            tasterGedrueckt = true;
-            letzteTasterZeit = millis();
+    if (digitalRead(tasterPin) == LOW && !tasterGedrueckt && millis() - letzteTasterZeit > entprellZeit) {
+        tasterGedrueckt = true;
+        letzteTasterZeit = millis();
+        // Wechsle den Betriebsmodus
+        if (!roboterInBetrieb) {
+            modus = 1; // Standardroute als Beispiel
+            roboterInBetrieb = true;
+        } else {
+            handleStopp();
         }
-    } else {
+    } else if (digitalRead(tasterPin) == HIGH && tasterGedrueckt) {
         tasterGedrueckt = false;
     }
-
-    // Rest Ihrer Loop...
-
 
     switch (modus) {
         case 1:  // Standardroute
