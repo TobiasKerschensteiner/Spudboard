@@ -32,6 +32,7 @@ AccelStepper stepper1(HALFSTEP, 17, 18, 5, 16);
 AccelStepper stepper2(HALFSTEP, 26, 14, 27, 12);
 
 enum State {MOVING_FORWARD, TURNING_RIGHT, MOVING_SHORT_DISTANCER, TURNING_LEFT, MOVING_SHORT_DISTANCEL, TURNING_LEFT2, TURNING_RIGHT2, STOPPING };
+// TURNING_LEFT2, TURNING_RIGHT2; MOVING_SHORT_SISTANCEL, MOVSING_SHORT_DISTANCER, ist zur Sicherheit da damit keine doppel beledung da ist damit das program nicht überfordert ist 
 State currentState = MOVING_FORWARD;
 bool hasTurnedRight = false;
 bool turnLeftNext = false; // Flag, um zu bestimmen, ob als nächstes nach links gedreht werden soll
@@ -107,14 +108,6 @@ void moveShortDistance(int steps) {
   }
 }
 
-void moveShortDistanceL(int steps) {
-  stepper1.move(steps);
-  stepper2.move(steps);
-  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
-    stepper1.run();
-    stepper2.run();
-  }
-}
 
 void stopMotors() {
   stepper1.stop(); // Stoppe Stepper 1
@@ -146,7 +139,11 @@ void loop() {
 
     case TURNING_RIGHT:
       turnRight(); // Führe eine Rechtsabbiegung aus
-      currentState = MOVING_SHORT_DISTANCER;
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = STOPPING;
+      } else {
+        currentState = MOVING_SHORT_DISTANCER;
+      }
       break;
 
     case MOVING_SHORT_DISTANCER:
@@ -162,11 +159,17 @@ void loop() {
 
     case TURNING_LEFT:
       turnLeft(); // Führe eine Linksabbiegung aus
-      currentState = MOVING_SHORT_DISTANCEL; // Kehre zurück zum Zustand vorwärts bewegen
+      // Überprüfe den Sensorwert direkt nach der Drehung
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = STOPPING;
+      } else {
+        currentState = MOVING_SHORT_DISTANCEL; // Kehre zurück zum Zustand vorwärts bewegen
+      }
       break;
 
+
     case MOVING_SHORT_DISTANCEL:
-      moveShortDistanceL(dist);
+      moveShortDistance(dist);
       currentState = TURNING_LEFT2;
       break;
 
