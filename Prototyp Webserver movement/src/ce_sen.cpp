@@ -23,6 +23,7 @@ const int maxspeeddre = 1000;
 const int besch = 200;
 const int desiredSpeed = 1000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
 const int sensorPin = 15; // Pin-Nummer des Sensors
+const int wisch = 19; // Pin-Nummer wischmodul
 const int delays = 2000;
 const int dist = 1000;
 
@@ -45,6 +46,7 @@ void setup() {
   stepper2.setSpeed(desiredSpeed);
 
   pinMode(sensorPin, INPUT); // Setze den Sensor-Pin als Eingang
+  pinMode(wisch, OUTPUT); // Setze das Wischmodula als Ausgang 
 }
 
 
@@ -127,6 +129,8 @@ void stopMotors() {
 void loop() {
   int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
+  digitalWrite(wisch,HIGH); // wisch soll an gehen 
+
   switch (currentState) {
     case MOVING_FORWARD:
       moveForward(); // Bewege dich vorwärts
@@ -136,7 +140,6 @@ void loop() {
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
         } else {
           currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
-          //turnRightNext = false;
         }
       }
       break;
@@ -170,7 +173,16 @@ void loop() {
     case TURNING_LEFT2:
       turnLeft();
       currentState = MOVING_FORWARD;
-      //turnRightNext = true;
       break;
+
+
+// Motor stoppt sobal er am ende der Tafel angekommen ist )funktioniert noch nicht)
+    case STOPPING:
+      stopMotors();
+      break;
+
+
+
+
   }
 }
