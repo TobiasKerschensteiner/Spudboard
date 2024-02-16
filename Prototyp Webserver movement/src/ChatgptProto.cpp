@@ -32,7 +32,7 @@ const int Sensor = 21;
 const int Wisch = 19;
 
 //Taster 
-const int tasterPin = 2; // Ersetzen Sie 2 durch den tatsächlichen Pin
+const int tasterPin = 34; // Ersetzen Sie 2 durch den tatsächlichen Pin
 
 
 // Position und Ausrichtung
