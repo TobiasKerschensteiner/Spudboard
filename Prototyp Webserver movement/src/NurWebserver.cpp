@@ -3,12 +3,12 @@
 #include <ArduinoJson.h>
 
 // WLAN-Zugangsdaten
-const char* ssid = "Alpakhan";
-const char* password = "Bananenmus";
+const char* ssid = "WLAN";
+const char* password = "PASSWORD";
 
 WebServer server(80);
 bool roboterInBetrieb = false;
-int akkustand = 33; // Beispiel fuer einen Akkustand
+int akkustand = 0; // Beispiel fuer einen Akkustand
 int aktuellerModus = 0; // Globale Variable fuer den aktuellen Modus
 int fortschritt = 0;
 int verstricheneZeit;
@@ -229,8 +229,20 @@ void getStatus() {
     server.send(200, "application/json", output);
 }
 
+void getBattery()
+{
+  int Voltage = analogRead(34);
+
+  akkustand = map(Voltage,2950,4095,0,100);
+
+  //Serial.println(Voltage);
+  Serial.println(akkustand);
+}
+
 void setup() {
     Serial.begin(9600);
+
+      pinMode(13,INPUT_PULLDOWN);
 
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
@@ -268,11 +280,12 @@ void loop() {
     if (currentMillis - previousMillis >= interval) {
         previousMillis = currentMillis;
 
-        if (roboterInBetrieb) {
+        getBattery();
+        /*if (roboterInBetrieb) {
             // Verringere den Akkustand nur, wenn der Roboter in Betrieb ist
             akkustand = akkustand > 0 ? akkustand - 1 : 100; // Verringere den Akkustand um 1% jede Sekunde, setze zurück auf 100% bei 0
             Serial.println("Akkustand: " + String(akkustand) + "%");
-        }
+        }*/
     }
     server.handleClient();
     if (roboterInBetrieb) {
