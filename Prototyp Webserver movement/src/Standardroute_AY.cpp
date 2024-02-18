@@ -70,7 +70,7 @@ unsigned long currentTime = 0;
 unsigned long previousTime = 0;
 WiFiServer server(80);
 #define MICROSTEP 16
-int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
+ //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
 
 
 //pin belegung
@@ -79,9 +79,7 @@ AccelStepper stepper2(MICROSTEP, 26, 14, 27, 12);
 int sensor = 15; //Sensorvalue = 0 -> sensor erkennt Boden, Sensorvalue = 1 -> Sensorvalue erkennt keinen Boden
 int gyroscl = 22;
 int gyrosda = 21;
-int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
-int stepperSpeed = 1000; //Geschwindigkeit
-int turnSteps = 4200; //anzahl an schritten für eine 90° drehung 
+
 
 //Variablen
 int maxstepperSpeed = 2000; //Max Geschwindigkeit soll nicht mehr als 2000 betragen
