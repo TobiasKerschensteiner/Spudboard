@@ -1,659 +1,223 @@
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_GC9A01A.h>
-#include "SPIFFS.h"
 #include <Arduino.h>
-#include <AccelStepper.h>
+//#include <Adafruit_GC9A01A.h>
+//#include <Adafruit_GFX.h>
+//#include <FS.h>
+//#include <SPIFFS.h>
+#include <TFT_eSPI.h>
+#include <math.h>
 
 
-
-
-
+/*
 // Display-Pins definieren
-#define TFT_CS   13  // Chip Select Pin
+#define TFT_CS   22  // Chip Select Pin
 #define TFT_RST  4  // Reset Pin
-#define TFT_DC   32  // Data/Command Pin
+#define TFT_DC   16  // Data/Command Pin
 #define TFT_DIN  23
-#define TFT_CLK  19
+#define TFT_CLK  18
+  */
+
+TFT_eSPI tft = TFT_eSPI();  // Initialisiere die Bibliothek für das TFT-Display
+
+unsigned long previousMillis = 0;  // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
+const long interval = 1000;  // Intervall für die Aktualisierung der Uhrzeit in Millisekunden (1000 ms = 1 Sekunde)
+
+int startMinutes = 0;  // Startminuten für den Countdown
+int startSeconds = 30;  // Startsekunden für den Countdown
+int totalSeconds = startMinutes * 60 + startSeconds;  // Gesamtzeit des Countdowns in Sekunden
+int remainingSeconds = totalSeconds;  // Verbleibende Zeit des Countdowns in Sekunden
+
+bool isCharging = true; // Setzen Sie diese Variable entsprechend dem Ladezustand des Akkus
+bool wlanverbunden = true; // setzten endprechen ob mit WLAn verbunden oder nicht 
+
+void setup(void) {
+  tft.init();  // Initialisiere das TFT-Display
+  tft.setTextDatum(MC_DATUM); // Setze den Textausrichtungspunkt in die Mitte des Displays
+  tft.setTextSize(4);  // Setze die Textgröße
+  tft.setRotation(1);  // Richtige Ausrichtung für den Füll-Effekt
+  tft.fillScreen(TFT_BLACK);
+}
+
+
+//WLANsymbol
+void drawWLANSymbol() {
+  int centerX = tft.width() / 2;
+  int topY = 10; // Abstand vom oberen Rand des Bildschirms für das WLANsymbol
+  int radius = 5;  // radius kreis
   
 
-
- 
-
-// Hardware SPI on Feather or other boards
-
-Adafruit_GC9A01A tft(TFT_CS, TFT_DC);
-
- 
-
-void setup() {
-
-  Serial.begin(9600);
-
-  Serial.println("GC9A01A Test!");
-
- 
-
-  tft.begin();
-
- 
-
-  Serial.println(F("Benchmark                Time (microseconds)"));
-
-  delay(10);
-
-  Serial.print(F("Screen fill              "));
-
-  //Serial.println(testFillScreen());
-
-  delay(500);
-
- 
-
-  Serial.print(F("Text                     "));
-
-  //Serial.println(testText());
-
-  delay(3000);
-
- 
-
-  Serial.print(F("Lines                    "));
-
-  //Serial.println(testLines(GC9A01A_CYAN));
-
-  delay(500);
-
- 
-
-  Serial.print(F("Horiz/Vert Lines         "));
-
-  //Serial.println(testFastLines(GC9A01A_RED, GC9A01A_BLUE));
-
-  delay(500);
-
- 
-
-  Serial.print(F("Rectangles (outline)     "));
-
-  //Serial.println(testRects(GC9A01A_GREEN));
-
-  delay(500);
-
- 
-
-  Serial.print(F("Rectangles (filled)      "));
-
-  //Serial.println(testFilledRects(GC9A01A_YELLOW, GC9A01A_MAGENTA));
-
-  delay(500);
-
- 
-
-  Serial.print(F("Circles (filled)         "));
-
-  //Serial.println(testFilledCircles(10, GC9A01A_MAGENTA));
-
- 
-
-  Serial.print(F("Circles (outline)        "));
-
-  //Serial.println(testCircles(10, GC9A01A_WHITE));
-
-  delay(500);
-
- 
-
-  Serial.print(F("Triangles (outline)      "));
-
-  //Serial.println(testTriangles());
-
-  delay(500);
-
- 
-
-  Serial.print(F("Triangles (filled)       "));
-
-  //Serial.println(testFilledTriangles());
-
-  delay(500);
-
- 
-
-  Serial.print(F("Rounded rects (outline)  "));
-
-  //Serial.println(testRoundRects());
-
-  delay(500);
-
- 
-
-  Serial.print(F("Rounded rects (filled)   "));
-
-  //Serial.println(testFilledRoundRects());
-
-  delay(500);
-
- 
-
-  Serial.println(F("Done!"));
-
-}
-
- 
-
- 
-
-unsigned long testFillScreen() {
-
-  unsigned long start = micros();
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
-  tft.fillScreen(GC9A01A_RED);
-
-  yield();
-
-  tft.fillScreen(GC9A01A_GREEN);
-
-  yield();
-
-  tft.fillScreen(GC9A01A_BLUE);
-
-  yield();
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testText() {
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  unsigned long start = micros();
-
-  tft.setCursor(0, 0);
-
-  tft.setTextColor(GC9A01A_WHITE);  tft.setTextSize(1);
-
-  tft.println("Hello World!");
-
-  tft.setTextColor(GC9A01A_YELLOW); tft.setTextSize(2);
-
-  tft.println(1234.56);
-
-  tft.setTextColor(GC9A01A_RED);    tft.setTextSize(3);
-
-  tft.println(0xDEADBEEF, HEX);
-
-  tft.println();
-
-  tft.setTextColor(GC9A01A_GREEN);
-
-  tft.setTextSize(5);
-
-  tft.println("Groop");
-
-  tft.setTextSize(2);
-
-  tft.println("I implore thee,");
-
-  tft.setTextSize(1);
-
-  tft.println("my foonting turlingdromes.");
-
-  tft.println("And hooptiously drangle me");
-
-  tft.println("with crinkly bindlewurdles,");
-
-  tft.println("Or I will rend thee");
-
-  tft.println("in the gobberwarts");
-
-  tft.println("with my blurglecruncheon,");
-
-  tft.println("see if I don't!");
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testLines(uint16_t color) {
-
-  unsigned long start, t;
-
-  int           x1, y1, x2, y2,
-
-                w = tft.width(),
-
-                h = tft.height();
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
- 
-
-  x1 = y1 = 0;
-
-  y2    = h - 1;
-
-  start = micros();
-
-  for(x2=0; x2<w; x2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  x2    = w - 1;
-
-  for(y2=0; y2<h; y2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  t     = micros() - start; // fillScreen doesn't count against timing
-
- 
-
-  yield();
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
- 
-
-  x1    = w - 1;
-
-  y1    = 0;
-
-  y2    = h - 1;
-
-  start = micros();
-
-  for(x2=0; x2<w; x2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  x2    = 0;
-
-  for(y2=0; y2<h; y2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  t    += micros() - start;
-
- 
-
-  yield();
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
- 
-
-  x1    = 0;
-
-  y1    = h - 1;
-
-  y2    = 0;
-
-  start = micros();
-
-  for(x2=0; x2<w; x2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  x2    = w - 1;
-
-  for(y2=0; y2<h; y2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  t    += micros() - start;
-
- 
-
-  yield();
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  yield();
-
- 
-
-  x1    = w - 1;
-
-  y1    = h - 1;
-
-  y2    = 0;
-
-  start = micros();
-
-  for(x2=0; x2<w; x2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
-  x2    = 0;
-
-  for(y2=0; y2<h; y2+=6) tft.drawLine(x1, y1, x2, y2, color);
-
- 
-
-  yield();
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testFastLines(uint16_t color1, uint16_t color2) {
-
-  unsigned long start;
-
-  int           x, y, w = tft.width(), h = tft.height();
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  start = micros();
-
-  for(y=0; y<h; y+=5) tft.drawFastHLine(0, y, w, color1);
-
-  for(x=0; x<w; x+=5) tft.drawFastVLine(x, 0, h, color2);
-
- 
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testRects(uint16_t color) {
-
-  unsigned long start;
-
-  int           n, i, i2,
-
-                cx = tft.width()  / 2,
-
-                cy = tft.height() / 2;
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  n     = min(tft.width(), tft.height());
-
-  start = micros();
-
-  for(i=2; i<n; i+=6) {
-
-    i2 = i / 2;
-
-    tft.drawRect(cx-i2, cy-i2, i, i, color);
+  // Zeichne das größere Ladesymbol nur, wenn isCharging true ist
+  if (wlanverbunden) {
+      tft.fillCircle(centerX - radius /2,topY, radius, TFT_PINK);
+      tft.drawCircle(centerX - radius / 2, topY, radius, TFT_PINK);
 
   }
-
- 
-
-  return micros() - start;
-
 }
 
- 
+//WLAN
+void drawWiFiDetails() {
+  tft.fillScreen(TFT_BLACK);
+    // Definiere die Position für die WLAN-Details
+    int startX = 120;  // Abstand vom linken Rand des Bildschirms
+    int startY = 60;  // Abstand vom oberen Rand des Bildschirms
+    int lineHeight = 30;  // Höhe zwischen den Zeilen
+    tft.setTextSize(2);
 
-unsigned long testFilledRects(uint16_t color1, uint16_t color2) {
+    // Lösche den Bereich, wo die WLAN-Details erscheinen
+    tft.fillRect(startX, startY, tft.width() - 2 * startX, 2 * lineHeight + 5, TFT_BLACK);
 
-  unsigned long start, t = 0;
+    // Setze die Textfarbe
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);  // Weißer Text mit schwarzem Hintergrund
 
-  int           n, i, i2,
+    // Zeichne "WLAN:" Text
+    tft.drawString("WLAN:", startX, startY, 2);  // Verwenden Sie die passende Schriftgröße
 
-                cx = tft.width()  / 2 - 1,
+    // Zeichne die maskierte ip
+    tft.drawString("XXXXX", startX, startY + lineHeight, 2);  // Verwenden Sie die passende Schriftgröße
 
-                cy = tft.height() / 2 - 1;
+    // Zeichne das Passwort text
+    tft.drawString("Password:", startX, startY + 2 * lineHeight, 2);  // Verwenden Sie die passende Schriftgröße
 
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  n = min(tft.width(), tft.height());
-
-  for(i=n; i>0; i-=6) {
-
-    i2    = i / 2;
-
-    start = micros();
-
-    tft.fillRect(cx-i2, cy-i2, i, i, color1);
-
-    t    += micros() - start;
-
-    // Outlines are not included in timing results
-
-    tft.drawRect(cx-i2, cy-i2, i, i, color2);
-
-    yield();
-
-  }
-
- 
-
-  return t;
-
+    // Zeichne das maskierte Passwort
+    tft.drawString("XXXXXXXXX", startX, startY + 3 * lineHeight, 2);  // Verwenden Sie die passende Schriftgröße
 }
 
- 
 
-unsigned long testFilledCircles(uint8_t radius, uint16_t color) {
+//Ladesymbol
+void drawChargingSymbol() {
+  tft.setTextSize(4);
+    int centerX = tft.width() / 2;
+    int topY = 10; // Abstand vom oberen Rand des Bildschirms für das Ladesymbol
+    int rectWidth = 20;  // Breite des größeren Rechtecksymbols
+    int rectHeight = 10;  // Höhe des größeren Rechtecksymbols
+    int smallRectWidth = 2;  // Breite des kleineren Rechtecksymbols
+    int smallRectHeight = 4;  // Höhe des kleineren Rechtecksymbols
+    int spaceBetween = 1;  // Abstand zwischen den beiden Rechtecken
 
-  unsigned long start;
 
-  int x, y, w = tft.width(), h = tft.height(), r2 = radius * 2;
+    // Lösche den Bereich, wo die Ladesymbole erscheinen
+    tft.fillRect(centerX - rectWidth / 2 - 1, topY - 1, rectWidth + smallRectWidth + spaceBetween + 3, rectHeight + 2, TFT_BLACK);
 
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  start = micros();
-
-  for(x=radius; x<w; x+=r2) {
-
-    for(y=radius; y<h; y+=r2) {
-
-      tft.fillCircle(x, y, radius, color);
-
+    // Zeichne das größere Ladesymbol nur, wenn isCharging true ist
+    if (isCharging) {
+        tft.drawRect(centerX - rectWidth / 2, topY, rectWidth, rectHeight, TFT_YELLOW);
+        // Zeichne das kleinere Rechteck rechts neben dem größeren Rechteck
+        tft.drawRect(centerX - rectWidth / 2 + rectWidth + spaceBetween, topY + (rectHeight - smallRectHeight) / 2, smallRectWidth, smallRectHeight, TFT_YELLOW);
     }
-
-  }
-
- 
-
-  return micros() - start;
-
 }
 
- 
+//Akkuanzeige
+void drawBatteryLevel(float batteryLevel) {
 
-unsigned long testCircles(uint8_t radius, uint16_t color) {
+  tft.setTextSize(4);
+    // Aktualisiere den Hintergrund basierend auf dem Akkustand
+    tft.fillRect(0, 0, tft.width(), tft.height(), TFT_BLACK);  // Lösche zuerst den gesamten Bildschirm
+    int fillHeight = tft.height() * batteryLevel;  // Berechne die Füllhöhe basierend auf dem Akkustand
+    tft.fillRect(0, tft.height() - fillHeight, tft.width(), fillHeight, TFT_GREEN);  // Fülle den unteren Bereich des Bildschirms
 
-  unsigned long start;
+    // Definiere den Bereich für den Prozenttext
+    int textX = tft.width() / 2;
+    int textY = tft.height() / 2;
 
-  int           x, y, r2 = radius * 2,
+    // Bereite den Akkustand als Text vor
+    char batteryStr[10];
+    sprintf(batteryStr, "%d%%", (int)(batteryLevel * 100));
 
-                w = tft.width()  + radius,
+    // Setze die Textfarbe und zeichne den Akkustand
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);  // Weißer Text mit schwarzem Hintergrund
+    tft.drawString(batteryStr, textX, textY, 2);  // Stellen Sie sicher, dass die richtige Schriftgröße verwendet wird
+}
 
-                h = tft.height() + radius;
 
- 
+void drawFilledSegment(int centerX, int centerY, int radius, float startAngle, float endAngle, uint32_t color) {
+  // Definiere die Segmentgröße (in Grad)
+  float segmentSize = 5.0;
 
-  // Screen is not cleared for this one -- this is
+  for (float angle = startAngle; angle < endAngle; angle += segmentSize) {
+    float angleRad = angle * DEG_TO_RAD; // Umrechnung in Radiant
+    float nextAngleRad = (angle + segmentSize) * DEG_TO_RAD; // Nächster Winkel in Radiant
 
-  // intentional and does not affect the reported time.
+    // Berechne die Koordinaten der Eckpunkte des Segments
+    int x1 = centerX + radius * cos(angleRad);
+    int y1 = centerY + radius * sin(angleRad);
+    int x2 = centerX + radius * cos(nextAngleRad);
+    int y2 = centerY + radius * sin(nextAngleRad);
 
-  start = micros();
+    // Zeichne das Segment als Dreieck
+    tft.fillTriangle(centerX, centerY, x1, y1, x2, y2, color);
+  }
+}
 
-  for(x=0; x<w; x+=r2) {
+//Hintergrund Timer anzeige
+void updateTimerDisplay() {
+  tft.setTextSize(4);
+  // Berechne den Winkel für den Füll-Effekt basierend auf der verbleibenden Zeit
+  float angle = 360.0 * (1.0 - (float)remainingSeconds / (float)totalSeconds);
 
-    for(y=0; y<h; y+=r2) {
+  // Lösche den Bildschirm
+  tft.fillScreen(TFT_BLACK);
 
-      tft.drawCircle(x, y, radius, color);
+  // Zeichne den gefüllten Sektor
+  int centerX = tft.width() / 2;
+  int centerY = tft.height() / 2;
+  int radius = min(tft.width(), tft.height()) / 2;
+  drawFilledSegment(centerX, centerY, radius, 0, angle, TFT_CYAN);
 
+  // Bereite die Zeit als Zeichenkette vor und zeichne sie
+  int minutes = remainingSeconds / 60;
+  int seconds = remainingSeconds % 60;
+  char timeStr[6];
+  sprintf(timeStr, "%02d:%02d", minutes, seconds);  // Formatieren der Zeit im Format mm:ss
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);  // Textfarbe auf Weiß mit schwarzem Hintergrund setzen
+  tft.drawString(timeStr, centerX, centerY); // Zeichne die Zeit in der Mitte des Bildschirms
+}
+
+//Funktion Timer
+void time() {
+  unsigned long currentMillis = millis();  // Aktuelle Zeit seit Programmstart in Millisekunden
+
+  if (currentMillis - previousMillis >= interval) {  // Überprüfe, ob das festgelegte Intervall vergangen ist
+    previousMillis = currentMillis;  // Aktualisiere die letzte Aktualisierungszeit
+
+    // Dekrementiere die verbleibenden Sekunden jede Sekunde
+    if (remainingSeconds > 0) {
+      remainingSeconds--;
+      updateTimerDisplay();  // Aktualisiere die Anzeige mit der neuen Zeit und dem neuen Hintergrund
+    } 
+  }
+}
+
+void loop() {
+  static unsigned long lastChangeMillis = 0;  // Speichert den Zeitpunkt des letzten Funktionswechsels
+  static int state = 0;  // Zustandsvariable, die bestimmt, welche Funktion ausgeführt wird
+
+  unsigned long currentMillis = millis();  // Aktuelle Zeit seit dem Programmstart in Millisekunden
+
+  // Überprüfe, ob 5 Sekunden vergangen sind
+  if (currentMillis - lastChangeMillis >= 5000) {
+    lastChangeMillis = currentMillis;  // Aktualisiere die letzte Wechselzeit
+
+    // Wechsel zwischen den Zuständen
+    state = (state + 1) % 4;  // Erhöhe den Zustand und wende Modulo an, um im Bereich [0,3] zu bleiben
+  }
+
+  // Führe die Funktion basierend auf dem aktuellen Zustand aus
+  switch (state) {
+    case 0:
+      time();  // Aktualisiere und zeige den Timer
+      break;
+    case 1: {
+      float batteryLevel = 0.50;  // Beispiel: Akkustand
+      drawBatteryLevel(batteryLevel);  // Zeichne die Akkuanzeige
+      drawChargingSymbol();
+      delay(5000);
+      break;
     }
-
+    case 2:
+      drawWiFiDetails();  // Zeichne die WLAN-Details
+      drawWLANSymbol();  // Zeichne das WLAN-Symbol
+      delay(5000);
+      break;
   }
-
- 
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testTriangles() {
-
-  unsigned long start;
-
-  int           n, i, cx = tft.width()  / 2 - 1,
-
-                      cy = tft.height() / 2 - 1;
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  n     = min(cx, cy);
-
-  start = micros();
-
-  for(i=0; i<n; i+=5) {
-
-    tft.drawTriangle(
-
-      cx    , cy - i, // peak
-
-      cx - i, cy + i, // bottom left
-
-      cx + i, cy + i, // bottom right
-
-      tft.color565(i, i, i));
-
-  }
-
- 
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testFilledTriangles() {
-
-  unsigned long start, t = 0;
-
-  int           i, cx = tft.width()  / 2 - 1,
-
-                   cy = tft.height() / 2 - 1;
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  start = micros();
-
-  for(i=min(cx,cy); i>10; i-=5) {
-
-    start = micros();
-
-    tft.fillTriangle(cx, cy - i, cx - i, cy + i, cx + i, cy + i,
-
-      tft.color565(0, i*10, i*10));
-
-    t += micros() - start;
-
-    tft.drawTriangle(cx, cy - i, cx - i, cy + i, cx + i, cy + i,
-
-      tft.color565(i*10, i*10, 0));
-
-    yield();
-
-  }
-
- 
-
-  return t;
-
-}
-
- 
-
-unsigned long testRoundRects() {
-
-  unsigned long start;
-
-  int           w, i, i2,
-
-                cx = tft.width()  / 2 - 1,
-
-                cy = tft.height() / 2 - 1;
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  w     = min(tft.width(), tft.height());
-
-  start = micros();
-
-  for(i=0; i<w; i+=6) {
-
-    i2 = i / 2;
-
-    tft.drawRoundRect(cx-i2, cy-i2, i, i, i/8, tft.color565(i, 0, 0));
-
-  }
-
- 
-
-  return micros() - start;
-
-}
-
- 
-
-unsigned long testFilledRoundRects() {
-
-  unsigned long start;
-
-  int           i, i2,
-
-                cx = tft.width()  / 2 - 1,
-
-                cy = tft.height() / 2 - 1;
-
- 
-
-  tft.fillScreen(GC9A01A_BLACK);
-
-  start = micros();
-
-  for(i=min(tft.width(), tft.height()); i>20; i-=6) {
-
-    i2 = i / 2;
-
-    tft.fillRoundRect(cx-i2, cy-i2, i, i, i/8, tft.color565(0, i, 0));
-
-    yield();
-
-  }
-
- 
-
-  return micros() - start;
-
 }
 
 
@@ -661,19 +225,3 @@ unsigned long testFilledRoundRects() {
 
 
 
-
-
-
-void loop(void) {
-
-  for(uint8_t rotation=0; rotation<4; rotation++) {
-
-    tft.setRotation(rotation);
-
-    testText();
-
-    delay(1000);
-
-  }
-
-}
