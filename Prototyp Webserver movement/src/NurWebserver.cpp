@@ -9,6 +9,7 @@ const char* password = "PASSWORD";
 WebServer server(80);
 bool roboterInBetrieb = false;
 int akkustand = 0; // Beispiel fuer einen Akkustand
+int charging = 0;
 int aktuellerModus = 0; // Globale Variable fuer den aktuellen Modus
 int fortschritt = 0;
 int verstricheneZeit;
@@ -233,10 +234,22 @@ void getBattery()
 {
   int Voltage = analogRead(34);
 
-  akkustand = map(Voltage,2950,4095,0,100);
+  akkustand = map(Voltage,2950,4095,0,120);
+
+  if (akkustand >= 100)
+  {
+    charging = 1;
+    akkustand = 100;
+  }
+  else 
+  {
+    charging = 0;
+  }
+
 
   //Serial.println(Voltage);
   Serial.println(akkustand);
+  Serial.println(charging);
 }
 
 void setup() {

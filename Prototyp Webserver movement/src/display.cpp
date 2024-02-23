@@ -11,6 +11,7 @@
 // Display-Pins definieren
 #define TFT_CS   22  // Chip Select Pin
 #define TFT_RST  4  // Reset Pin
++
 #define TFT_DC   16  // Data/Command Pin
 #define TFT_DIN  23
 #define TFT_CLK  18

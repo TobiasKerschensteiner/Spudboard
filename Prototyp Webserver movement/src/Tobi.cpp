@@ -1,3 +1,4 @@
+
 #include <Arduino.h>
 
 int stepCounter;
@@ -72,7 +73,7 @@ void loop(){
         digitalWrite(DIRR,HIGH);
         moveF();
         digitalWrite(Wisch,HIGH); 
-        Serial.println("Straight");
+        //Serial.println("Straight");
       
     }
     else
