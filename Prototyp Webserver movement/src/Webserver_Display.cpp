@@ -21,7 +21,7 @@
 
 // WLAN-Zugangsdaten
 const char* ssid = "WLAN";
-const char* password = "password";
+const char* password = "Password";
 
 WebServer server(80);
 bool roboterInBetrieb = false;
@@ -43,7 +43,7 @@ TFT_eSPI tft = TFT_eSPI();  // Initialisiere die Bibliothek für das TFT-Display
 unsigned long previousMillis = 0;  // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
 const long interval = 1000;  // Intervall für die Aktualisierung der Uhrzeit in Millisekunden (1000 ms = 1 Sekunde)
 
-int startMinutes = 0;  // Startminuten für den Countdown
+int startMinutes = 1;  // Startminuten für den Countdown
 int startSeconds = 30;  // Startsekunden für den Countdown
 int totalSeconds = startMinutes * 60 + startSeconds;  // Gesamtzeit des Countdowns in Sekunden
 int remainingSeconds = totalSeconds;  // Verbleibende Zeit des Countdowns in Sekunden
@@ -285,44 +285,6 @@ void getBattery()
   Serial.println(charging);
 }
 
-
-
-void setup(void) {
-    Serial.begin(9600);
-
-    // Initialisiere das Display zuerst, damit es unabhängig vom WiFi-Status aktiv ist
-    tft.init();
-    tft.setTextDatum(MC_DATUM);
-    tft.setTextSize(4);
-    tft.setRotation(1);
-    tft.fillScreen(TFT_BLACK);
-
-    pinMode(13, INPUT_PULLDOWN);
-
-    WiFi.begin(ssid, password);
-
-    unsigned long startAttemptTime = millis();
-
-    // Versuche für maximal 10 Sekunden, eine WiFi-Verbindung herzustellen
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-        isWifiConnected = true;
-        Serial.println("\nWiFi verbunden.");
-        Serial.println("IP-Adresse: ");
-        Serial.println(WiFi.localIP());
-    } else {
-        isWifiConnected = false;
-        Serial.println("\nWiFi-Verbindung fehlgeschlagen.");
-    }
-
-}
-
-
-
 //Display anzeigen 
 //WLANsymbol
 void drawWLANSymbol() {
@@ -394,28 +356,41 @@ void drawChargingSymbol() {
 
 //Akkuanzeige
 void drawBatteryLevel(float batteryLevel) {
-
   tft.setTextSize(4);
-    // Aktualisiere den Hintergrund basierend auf dem Akkustand
-    tft.fillRect(0, 0, tft.width(), tft.height(), TFT_BLACK);  // Lösche zuerst den gesamten Bildschirm
-    int fillHeight = tft.height() * batteryLevel;  // Berechne die Füllhöhe basierend auf dem Akkustand
-    tft.fillRect(0, tft.height() - fillHeight, tft.width(), fillHeight, TFT_GREEN);  // Fülle den unteren Bereich des Bildschirms
+  // Lösche zuerst den gesamten Bildschirm
+  tft.fillRect(0, 0, tft.width(), tft.height(), TFT_BLACK);
 
-    // Definiere den Bereich für den Prozenttext
-    int textX = tft.width() / 2;
-    int textY = tft.height() / 2;
+  // Berechne die Füllhöhe basierend auf dem Akkustand
+  int fillHeight = tft.height() * batteryLevel;
 
-    // Bereite den Akkustand als Text vor
-    char batteryStr[10];
-    sprintf(batteryStr, "%d%%", (int)(batteryLevel * 100));
+  // Wähle die Farbe basierend auf dem Akkustand
+  uint16_t backgroundColor;
+  if (batteryLevel > 0.5) {
+    backgroundColor = TFT_GREEN;  // Grün für 100-50%
+  } else if (batteryLevel > 0.2) {
+    backgroundColor = TFT_YELLOW; // Gelb für 49-20%
+  } else {
+    backgroundColor = TFT_RED;    // Rot für 19-0%
+  }
 
-    // Setze die Textfarbe und zeichne den Akkustand
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);  // Weißer Text mit schwarzem Hintergrund
-    tft.drawString(batteryStr, textX, textY, 2);  // Stellen Sie sicher, dass die richtige Schriftgröße verwendet wird
+  // Fülle den unteren Bereich des Bildschirms mit der gewählten Farbe
+  tft.fillRect(0, tft.height() - fillHeight, tft.width(), fillHeight, backgroundColor);
+
+  // Definiere den Bereich für den Prozenttext
+  int textX = tft.width() / 2;
+  int textY = tft.height() / 2;
+
+  // Bereite den Akkustand als Text vor
+  char batteryStr[10];
+  sprintf(batteryStr, "%d%%", (int)(batteryLevel * 100));
+
+  // Setze die Textfarbe und zeichne den Akkustand
+  tft.setTextColor(TFT_WHITE, TFT_BLACK); // Weißer Text mit schwarzem Hintergrund
+  tft.drawString(batteryStr, textX, textY, 2); // Verwende die richtige Schriftgröße
 }
 
-//Zeichne mood zustand (muss noch gefixt werden)
-void drawSmiley() {
+//Mood Glücklich für akku von 100-50%
+void drawSmiley100_50() {
   tft.fillScreen(TFT_BLACK); // Lösche den Bildschirm
 
   int centerX = tft.width() / 2;
@@ -433,40 +408,250 @@ void drawSmiley() {
       tft.drawLine(x0 + i, y0, x1 + i, y1, color);
     }
   };
+    // Zeichne "^"-Augen mit dickeren Linien
+    // Linkes Auge
+    drawThickLine(centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
+                  centerX - eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
+    drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY,
+                  centerX - eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
 
-  // Zeichne "^"-Augen mit dickeren Linien
-  // Linkes Auge
-  drawThickLine(centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
-                centerX - eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
-  drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY,
-                centerX - eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
+    // Rechtes Auge
+    drawThickLine(centerX + eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
+                  centerX + eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
+    drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY,
+                  centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
 
-  // Rechtes Auge
-  drawThickLine(centerX + eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
-                centerX + eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
-  drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY,
-                centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
+    // Funktion zum Zeichnen dickerer Bögen ohne Füllung
+    auto drawThickArc = [&](int x, int y, int radius, uint32_t startAngle, uint32_t endAngle, uint32_t color, int thickness) {
+      int outerRadius = radius; // Äußerer Radius des Bogens
+      int innerRadius = radius - thickness; // Innenradius des Bogens für die Dicke
 
- // Funktion zum Zeichnen dickerer Bögen
-auto drawThickArc = [&](int x, int y, int radius, uint32_t startAngle, uint32_t endAngle, uint32_t color, int thickness) {
-    for (int i = -thickness / 2; i <= thickness / 2; ++i) {
-        tft.drawArc(x + i, y, radius, 0, startAngle, endAngle, color, color, true);
-    }
-};
+      if (innerRadius < 0) innerRadius = 0; // Stellen Sie sicher, dass der Innenradius nicht negativ ist
 
+      // Zeichnen des Bogens. Beachten Sie, dass für bg_color hier die gleiche Farbe wie fg_color verwendet wird, um keinen Füllungseffekt zu haben.
+      tft.drawArc(x, y, outerRadius, innerRadius, startAngle, endAngle, color, color, true); // Das letzte 'true' aktiviert das Glätten des Bogens, falls gewünscht.
+    };
 
+    // Zeichne Mund in Form von zwei Halbkreisen, die oben geöffnet sind
+    int mouthCenterX = centerX; // Zentrum des Mundes (horizontal)
+    int mouthCenterY = centerY + 25; // Zentrum des Mundes (vertikal, etwas unterhalb der Augen)
+    int mouthRadius = 25; // Radius der Halbkreise
+    int mouthLineWidth = 1; // Breite der Mundlinien
+    int gab = 12;
 
-  // Zeichne Mund in Form einer liegenden "3"
-  int mouthCenterX = centerX; // Zentrum des Mundes (horizontal)
-  int mouthCenterY = centerY + 25; // Zentrum des Mundes (vertikal, etwas unterhalb der Augen)
-  int mouthRadius = 25; // Radius der "3"-Bögen
-  int mouthLineWidth = 5; // Breite der Mundlinien
-
-  // Oberer Bogen der "3"
-  drawThickArc(mouthCenterX - mouthRadius, mouthCenterY, mouthRadius, 0, 270, TFT_WHITE, mouthLineWidth);
-  // Unterer Bogen der "3"
-  drawThickArc(mouthCenterX + mouthRadius, mouthCenterY, mouthRadius, 0, 270, TFT_WHITE, mouthLineWidth);
+    // Linker Halbkreis, oben geöffnet
+    drawThickArc(mouthCenterX - mouthRadius / 2 -gab	, mouthCenterY, mouthRadius, 270, 90, TFT_WHITE, mouthLineWidth);
+    // Rechter Halbkreis, oben geöffnet
+    drawThickArc(mouthCenterX + mouthRadius / 2 + gab, mouthCenterY, mouthRadius, 270, 90, TFT_WHITE, mouthLineWidth);
 }
+//Mood Monoton für akku 50-20%
+void drawSmiley50_20() {
+  tft.fillScreen(TFT_BLACK); // Lösche den Bildschirm
+
+  int centerX = tft.width() / 2;
+  int centerY = tft.height() / 2;
+
+  int eyeOffsetX = 40; // Verringerte horizontale Position der Augen für weniger Abstand
+  int eyeOffsetY = 60; // Vertikale Position der Augen
+  int eyeWidth = 40; // Breite der "^"-Augen
+  int eyeHeight = 50; // Höhe der "^"-Augen
+  int lineWidth = 3; // Breite der Linien
+
+  // Funktion zum Zeichnen dickerer Linien
+  auto drawThickLine = [&](int x0, int y0, int x1, int y1, uint16_t color, int width) {
+    for (int i = -width / 2; i <= width / 2; ++i) {
+      tft.drawLine(x0 + i, y0, x1 + i, y1, color);
+    }
+  };
+    // Zeichne "^"-Augen mit dickeren Linien
+    // Linkes Auge
+    drawThickLine(centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
+                  centerX - eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
+    drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY,
+                  centerX - eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
+
+    // Rechtes Auge
+    drawThickLine(centerX + eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight,
+                  centerX + eyeOffsetX, centerY - eyeOffsetY, TFT_WHITE, lineWidth);
+    drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY,
+                  centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight, TFT_WHITE, lineWidth);
+
+  
+
+    // Zeichne Mund in Form von zwei Halbkreisen, die oben geöffnet sind
+    int mouthCenterX = centerX; // Zentrum des Mundes (horizontal)
+    int mouthCenterY = centerY + 25; // Zentrum des Mundes (vertikal, etwas unterhalb der Augen)
+    int mouthLineWidth = 20; // Breite der Mundlinien
+        // Mund als waagerechter Strich
+    int mouthWidth = 70; // Die gewünschte Breite des Mundes
+
+    // Anfangspunkt des Mundes (links)
+    int mouthStartX = mouthCenterX - mouthWidth / 2;
+    int mouthY = mouthCenterY; // Die y-Koordinate bleibt für Anfangs- und Endpunkt gleich
+
+    // Endpunkt des Mundes (rechts)
+    int mouthEndX = mouthCenterX + mouthWidth / 2;
+
+    // Zeichne den Mund als waagerechten Strich
+    drawThickLine(mouthStartX, mouthY, mouthEndX, mouthY, TFT_WHITE, mouthLineWidth);
+}
+//Mood Traurig für akku 20-0%
+void drawSmiley20_0() {
+  tft.fillScreen(TFT_BLACK); // Lösche den Bildschirm
+
+  int centerX = tft.width() / 2;
+  int centerY = tft.height() / 2;
+
+  int eyeOffsetX = 10; // Verringerte horizontale Position der Augen für weniger Abstand
+  int eyeOffsetY = 25; // Vertikale Position der Augen
+  int eyeWidth = 80; // Höhe
+  int eyeHeight = 50; // Breite
+  int lineWidth = 3; // Breite der Linien
+
+  // Funktion zum Zeichnen dickerer Linien
+  auto drawThickLine = [&](int x0, int y0, int x1, int y1, uint16_t color, int width) {
+    for (int i = -width / 2; i <= width / 2; ++i) {
+      tft.drawLine(x0 + i, y0, x1 + i, y1, color);
+    }
+  };
+     /// Zeichne "><"-Augen mit dickeren Linien, Spitzen zeigen zur Mitte
+// Linkes Auge
+drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des linken Auges
+              centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY - eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt oben links
+drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des linken Auges
+              centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt unten links
+
+// Rechtes Auge
+drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des rechten Auges
+              centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY - eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt oben rechts
+drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des rechten Auges
+              centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt unten rechts
+
+
+
+    // Funktion zum Zeichnen dickerer Bögen ohne Füllung
+    auto drawThickArc = [&](int x, int y, int radius, uint32_t startAngle, uint32_t endAngle, uint32_t color, int thickness) {
+      int outerRadius = radius; // Äußerer Radius des Bogens
+      int innerRadius = radius - thickness; // Innenradius des Bogens für die Dicke
+
+      if (innerRadius < 0) innerRadius = 0; // Stellen Sie sicher, dass der Innenradius nicht negativ ist
+
+      // Zeichnen des Bogens. Beachten Sie, dass für bg_color hier die gleiche Farbe wie fg_color verwendet wird, um keinen Füllungseffekt zu haben.
+      tft.drawArc(x, y, outerRadius, innerRadius, startAngle, endAngle, color, color, true); // Das letzte 'true' aktiviert das Glätten des Bogens, falls gewünscht.
+    };
+
+    // Zeichne Mund in Form von zwei Halbkreisen, die oben geöffnet sind
+    int mouthCenterX = centerX; // Zentrum des Mundes (horizontal)
+    int mouthCenterY = centerY + 50; // Zentrum des Mundes (vertikal, etwas unterhalb der Augen)
+    int mouthRadius = 30; // Radius der Halbkreise
+    int mouthLineWidth = 1; // Breite der Mundlinien
+    int gab = 12;
+
+    // Mund
+    drawThickArc(mouthCenterX - mouthRadius / 2 + gab	, mouthCenterY, mouthRadius, 90, 270, TFT_WHITE, mouthLineWidth);
+}
+//Mood Schalfen beim laden 
+void drawSmileyladen() {
+  tft.fillScreen(TFT_BLACK); // Lösche den Bildschirm
+
+   int centerX = tft.width() / 2;
+  int centerY = tft.height() / 2;
+
+  int eyeOffsetX = 10; // Verringerte horizontale Position der Augen für weniger Abstand
+  int eyeOffsetY = 25; // Vertikale Position der Augen
+  int eyeWidth = 80; // Höhe
+  int eyeHeight = 50; // Breite
+  int lineWidth = 3; // Breite der Linien
+
+  // Funktion zum Zeichnen dickerer Linien
+  auto drawThickLine = [&](int x0, int y0, int x1, int y1, uint16_t color, int width) {
+    for (int i = -width / 2; i <= width / 2; ++i) {
+      tft.drawLine(x0 + i, y0, x1 + i, y1, color);
+    }
+  };
+     /// Zeichne "><"-Augen mit dickeren Linien, Spitzen zeigen zur Mitte
+// Linkes Auge
+drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des linken Auges
+              centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY - eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt oben links
+drawThickLine(centerX - eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des linken Auges
+              centerX - eyeOffsetX - eyeWidth / 2, centerY - eyeOffsetY + eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt unten links
+
+// Rechtes Auge
+drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des rechten Auges
+              centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY - eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt oben rechts
+drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der Mitte des rechten Auges
+              centerX + eyeOffsetX + eyeWidth / 2, centerY - eyeOffsetY + eyeHeight / 2, TFT_WHITE, lineWidth); // Endpunkt unten rechts
+
+
+    // Funktion zum Zeichnen dickerer Bögen ohne Füllung
+    auto drawThickArc = [&](int x, int y, int radius, uint32_t startAngle, uint32_t endAngle, uint32_t color, int thickness) {
+      int outerRadius = radius; // Äußerer Radius des Bogens
+      int innerRadius = radius - thickness; // Innenradius des Bogens für die Dicke
+
+      if (innerRadius < 0) innerRadius = 0; // Stellen Sie sicher, dass der Innenradius nicht negativ ist
+
+      // Zeichnen des Bogens. Beachten Sie, dass für bg_color hier die gleiche Farbe wie fg_color verwendet wird, um keinen Füllungseffekt zu haben.
+      tft.drawArc(x, y, outerRadius, innerRadius, startAngle, endAngle, color, color, true); // Das letzte 'true' aktiviert das Glätten des Bogens, falls gewünscht.
+    };
+
+    // Zeichne Mund in Form von zwei Halbkreisen, die oben geöffnet sind
+    int mouthCenterX = centerX; // Zentrum des Mundes (horizontal)
+    int mouthCenterY = centerY + 25; // Zentrum des Mundes (vertikal, etwas unterhalb der Augen)
+    int mouthRadius = 20; // Radius der Halbkreise
+    int mouthLineWidth = 1; // Breite der Mundlinien
+    int gab = 10;
+
+    // Linker Halbkreis, oben geöffnet
+    drawThickArc(mouthCenterX - mouthRadius / 2 -gab	, mouthCenterY, mouthRadius, 270, 90, TFT_WHITE, mouthLineWidth);
+    // Rechter Halbkreis, oben geöffnet
+    drawThickArc(mouthCenterX + mouthRadius / 2 + gab, mouthCenterY, mouthRadius, 270, 90, TFT_WHITE, mouthLineWidth);
+
+    // Definiere die Position und Größe des "Z"
+    int zWidth = 5; // Die Breite des "Z"
+    int zHeight = 10; // Die Höhe des "Z"
+    int zLineWidth = 3; // Die Linienbreite des "Z"
+    uint16_t zColor = TFT_BLUE; // Die Farbe des "Z"
+
+    // Die obere linke Ecke des "Z" positionieren
+    int zStartX = mouthCenterX - zWidth + 20 / 2 ;
+    int zStartY = mouthCenterY - 20; // Positioniere das "Z" oberhalb des Mundes
+
+    // Zeichne die obere horizontale Linie des "Z"
+    drawThickLine(zStartX + 50, zStartY, zStartX + zWidth + 50 , zStartY, zColor, zLineWidth);
+    drawThickLine(zStartX + 62, zStartY - 12, zStartX + zWidth + 62, zStartY - 12, zColor, zLineWidth);
+    drawThickLine(zStartX + 74, zStartY - 29, zStartX + zWidth + 79 , zStartY - 29, zColor, zLineWidth);
+    
+
+    // Zeichne die diagonale Linie des "Z"
+    drawThickLine(zStartX + zWidth + 50, zStartY, zStartX + 50 , zStartY + zHeight, zColor, zLineWidth);
+    drawThickLine(zStartX + zWidth + 62, zStartY - 12, zStartX + 62 , zStartY + zHeight - 12, zColor, zLineWidth);
+    drawThickLine(zStartX + zWidth + 79, zStartY - 29, zStartX + 74 , zStartY + zHeight - 24, zColor, zLineWidth);
+   
+
+    // Zeichne die untere horizontale Linie des "Z"
+    drawThickLine(zStartX + 50, zStartY + zHeight, zStartX + zWidth + 50, zStartY + zHeight, zColor, zLineWidth);
+    drawThickLine(zStartX + 62, zStartY + zHeight - 12, zStartX + zWidth + 62, zStartY + zHeight - 12, zColor, zLineWidth);
+    drawThickLine(zStartX + 74, zStartY + zHeight - 24, zStartX + zWidth + 79, zStartY + zHeight - 24, zColor, zLineWidth);
+    
+    }
+//Akkuanzeige anhand der Moods
+void drawMoodBasedOnBatteryLevel(float batteryLevel) {
+    // Lösche den Bildschirm vor dem Zeichnen eines neuen Mood
+    tft.fillScreen(TFT_BLACK);
+
+    if (batteryLevel > 0.5) { // Akkustand über 50%
+        drawSmiley100_50(); // Zeichne glückliches Smiley
+    } else if (batteryLevel > 0.2) { // Akkustand zwischen 20% und 50%
+        drawSmiley50_20(); // Zeichne monotonen Smiley
+    } else { // Akkustand unter 20%
+        drawSmiley20_0(); // Zeichne trauriges Smiley
+    }
+
+    if (isCharging) { // Wenn das Gerät geladen wird
+        drawSmileyladen(); // Zeichne schlafendes Smiley
+    }
+}
+
 
 void drawFilledSegment(int centerX, int centerY, int radius, float startAngle, float endAngle, uint32_t color) {
   // Definiere die Segmentgröße (in Grad)
@@ -526,6 +711,46 @@ void time() {
   }
 }
 
+
+
+void setup(void) {
+    Serial.begin(9600);
+
+    // Initialisiere das Display zuerst, damit es unabhängig vom WiFi-Status aktiv ist
+    tft.init();
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextSize(4);
+    tft.setRotation(1);
+    tft.fillScreen(TFT_BLACK);
+
+    pinMode(13, INPUT_PULLDOWN);
+
+    WiFi.begin(ssid, password);
+
+    unsigned long startAttemptTime = millis();
+
+    // Versuche für maximal 10 Sekunden, eine WiFi-Verbindung herzustellen
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        isWifiConnected = true;
+        Serial.println("\nWiFi verbunden.");
+        Serial.println("IP-Adresse: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        isWifiConnected = false;
+        Serial.println("\nWiFi-Verbindung fehlgeschlagen.");
+    }
+
+    // Initialisiere den Timer und zeige ihn an
+    remainingSeconds = totalSeconds; // Setze den Timer auf den Startwert
+    updateTimerDisplay(); // Zeige den Timer sofort an
+
+}
+
 void loop() {
   static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
     const long interval = 1000; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
@@ -551,40 +776,64 @@ void loop() {
   //Display
   static unsigned long lastChangeMillis = 0;  // Speichert den Zeitpunkt des letzten Funktionswechsels
   static int state = 0;  // Zustandsvariable, die bestimmt, welche Funktion ausgeführt wird
+  static unsigned long timerPreviousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Timer aktualisiert wurde
+  static unsigned long displayPreviousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
+  const long timerInterval = 1000; // Intervall für die Aktualisierung des Timers in Millisekunden (1 Sekunde)
+  const long displayInterval = 5000; // Intervall für die Änderung der Display-Anzeige (5 Sekunden)
 
+  
   //unsigned long currentMillis = millis();  // Aktuelle Zeit seit dem Programmstart in Millisekunden
 
-  // Überprüfe, ob 5 Sekunden vergangen sind
-  if (currentMillis - lastChangeMillis >= 5000) {
-    lastChangeMillis = currentMillis;  // Aktualisiere die letzte Wechselzeit
-
-    // Wechsel zwischen den Zuständen
-    state = (state + 1) % 4;  // Erhöhe den Zustand und wende Modulo an, um im Bereich [0,3] zu bleiben
+/// Timer-Update-Logik
+  if (currentMillis - timerPreviousMillis >= 1000) { // Überprüfe, ob eine Sekunde vergangen ist
+    timerPreviousMillis += 1000; // Füge 1000 Millisekunden zum letzten Update-Zeitpunkt hinzu
+    if (remainingSeconds > 0) {
+      remainingSeconds--;
+      // Aktualisiere die Timer-Anzeige nur, wenn sich der Timer ändert und der Timer angezeigt werden soll
+      if (state == 0) {
+        updateTimerDisplay();
+      }
+    }
   }
 
-  // Führe die Funktion basierend auf dem aktuellen Zustand aus
+  // Display-Update-Logik (Für andere Zustände als den Timer)
+  if (currentMillis - displayPreviousMillis >= 5000) { // Überprüfe, ob 5 Sekunden vergangen sind
+    displayPreviousMillis += 5000; // Füge 5000 Millisekunden zum letzten Display-Update-Zeitpunkt hinzu
+    state = (state + 1) % 5; // Wechsel zwischen den Zuständen
+    // Führe die Funktion basierend auf dem aktuellen Zustand aus
   switch (state) {
     case 0:
+      drawMoodBasedOnBatteryLevel(1.00);
+      delay(5000);
+      break;
+    case 1:
       time();  // Aktualisiere und zeige den Timer
       break;
-    case 1: {
-      float batteryLevel = akkustand;  // Beispiel: Akkustand
+    case 2: {
+      float batteryLevel = 1.00;  // Beispiel: Akkustand
       drawBatteryLevel(batteryLevel);  // Zeichne die Akkuanzeige
       drawChargingSymbol();
       delay(5000);
       break;
-    }
-    case 2:
+      
+      //simulation
+    /*forr (float batteryLevel = 1.0; batteryLevel >= 0; batteryLevel -= 0.01) {
+    drawBatteryLevel(batteryLevel);  // Zeichne den abnehmenden Akkustand
+    delay(100);  // Warte einen Moment, um die Abnahme zu visualisieren
+  }
+
+  for (float batteryLevel = 0; batteryLevel <= 1.0; batteryLevel += 0.01) {
+    drawBatteryLevel(batteryLevel);  // Zeichne den zunehmenden Akkustand
+    delay(100);  // Warte einen Moment, um die Zunahme zu visualisieren
+  }*/
+      
+        }
+    case 3:
       drawWiFiDetails();  // Zeichne die WLAN-Details
       drawWLANSymbol();  // Zeichne das WLAN-Symbol
       delay(5000);
       break;
       
-  }
+        }
+    }
 }
-
-
-
-
-
-
