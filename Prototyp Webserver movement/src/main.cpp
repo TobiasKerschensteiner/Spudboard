@@ -18,14 +18,14 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 #define DRIVER 1
 #endif
 // Konstanten Roboter + Geschwindigkeiten 
-const float stepsPerRevolution = 2048; // Schritte für eine volle Umdrehung im Half-Step-Modus
-const float SteppDegree = 11.32;
-const int maxSpeed = 2000; //Maximale Geschwindigkeit 
-const int maxspeeddre = 1000; //Maximale Geschwindikeit bei den Drehungen 
-const int besch = 200; // Beschleunigung
-const int desiredSpeed = 1000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
+const float stepsPerRevolution = 10800; // Schritte für eine volle Umdrehung im Half-Step-Modus
+const float SteppDegree = 30;
+const int maxSpeed = 10000; //Maximale Geschwindigkeit 
+const int maxspeeddre = 10000; //Maximale Geschwindikeit bei den Drehungen 
+const int besch = 4000; // Beschleunigung
+const int desiredSpeed = 10000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
 const int delays = 2000; //delay von 2 sek
-const int dist = 2000; //Kleiner versatzt von 1000 schritten 
+const int dist = 5000; //Kleiner versatzt von 1000 schritten 
 const int Enable = 18;
 // Pinbelegung Sonstige
 const int taster1 = 34; //Taster stoppen 
@@ -36,8 +36,8 @@ const int wisch = 19; // Pin-Nummer wischmodul
 //const int SDA = 22; //gyro 
 
 // Pin-Belegung für beide Stepper-Motoren
-AccelStepper stepper1(DRIVER, 4,15);  
-AccelStepper stepper2(DRIVER, 5,17);
+AccelStepper stepper2(DRIVER, 4,15);  
+AccelStepper stepper1(DRIVER, 5,17);
 
 //Standard
 enum State {MOVING_FORWARD,
@@ -68,6 +68,10 @@ HomeState2 homeState2 = TURNING_LEFT2_HOME;
 
 void setup() {
   // Initialisiere die Motoren mit der gewünschten Geschwindigkeit
+
+  delay(4000); // Warten damit sich alle Signale beruhigen
+
+
   stepper1.setMaxSpeed(maxSpeed);
   stepper1.setSpeed(desiredSpeed);
 
@@ -91,7 +95,7 @@ void turnRight()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 180;
+  float degree = 2000;
   float moveRev = degree * SteppDegree;
   stepper1.move(moveRev);
   stepper2.move(-moveRev);
@@ -111,7 +115,7 @@ void turnLeft()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 180;
+  float degree = 2000;
   float moveRev = degree * SteppDegree;
   stepper1.move(-moveRev);
   stepper2.move(moveRev);
@@ -273,7 +277,7 @@ void homeur() {
 void loop() {
   int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
-  digitalWrite(wisch,HIGH); // wisch soll an gehen 
+  digitalWrite(wisch,HIGH); // wisch soll an gehen
 
   switch (currentState) {
     case MOVING_FORWARD:
