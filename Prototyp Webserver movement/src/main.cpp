@@ -1,171 +1,365 @@
+/*
+Hilfe:
+https://cool-web.de/arduino/multi-function-shield-step-motor.htm
+https://www.airspayce.com/mikem/arduino/AccelStepper/
+*/
+
+
+#include <SPI.h>
+// #include <Adafruit_GFX.h>
+// #include <Adafruit_GC9A01A.h>
+#include <FS.h>
+#include "SPIFFS.h"
 #include <Arduino.h>
-#include <WiFi.h>
 #include <AccelStepper.h>
 
-// Replace with your network credentials
-const char* ssid = "Alpakhan";
-const char* password = "Bananenmus";
+//#define HALFSTEP 8
+#ifndef DRIVER
+#define DRIVER 1
+#endif
+// Konstanten Roboter + Geschwindigkeiten 
+const float stepsPerRevolution = 2048; // Schritte für eine volle Umdrehung im Half-Step-Modus
+const float SteppDegree = 11.32;
+const int maxSpeed = 2000; //Maximale Geschwindigkeit 
+const int maxspeeddre = 1000; //Maximale Geschwindikeit bei den Drehungen 
+const int besch = 200; // Beschleunigung
+const int desiredSpeed = 1000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
+const int delays = 2000; //delay von 2 sek
+const int dist = 2000; //Kleiner versatzt von 1000 schritten 
+const int Enable = 18;
+// Pinbelegung Sonstige
+const int taster1 = 34; //Taster stoppen 
+const int taster2 = 35; // Taster Standardroute
+const int sensorPin = 23; // Pin-Nummer des Sensors
+const int wisch = 19; // Pin-Nummer wischmodul
+//const int SCL = 23; //gryo
+//const int SDA = 22; //gyro 
 
-// Set web server port number to 80
-WiFiServer server(80);
+// Pin-Belegung für beide Stepper-Motoren
+AccelStepper stepper1(DRIVER, 4,15);  
+AccelStepper stepper2(DRIVER, 5,17);
 
-// Motor Driver Pins
-#define IN1 18
-#define IN2 5
-#define IN3 17
-#define IN4 16
+//Standard
+enum State {MOVING_FORWARD,
+            TURNING_RIGHT, TURNING_RIGHT2,
+            MOVING_SHORT_DISTANCER, MOVING_SHORT_DISTANCEL,
+            TURNING_LEFT, TURNING_LEFT2,
+            STOPPINGUR, HOMEUR, STOPPINGOR, HOMEOR};
+State currentState = MOVING_FORWARD;
+bool hasTurnedRight = false;
+bool turnLeftNext = false; // Flag, um zu bestimmen, ob als nächstes nach links gedreht werden soll
 
-#define IN5 26
-#define IN6 27
-#define IN7 14
-#define IN8 13
+//Home
+enum HomeState {
+  TURNING_LEFT_HOME, TURNING_LEFT_HOME2, TURNING_LEFT_HOME3, TURNING_LEFT_HOME4,
+  MOVING_FORWARD_HOME, MOVING_FORWARD_HOME2, MOVING_FORWARD_HOME3, MOVING_FORWARD_HOME4,
+  STOPPING_HOME};
+// Initialisiere den Zustand für die Home-Funktion
+HomeState homeState = TURNING_LEFT_HOME;
 
-// Define the number of steps per revolution
-const int stepsPerRevolution = 2048;
+//Home2
+enum HomeState2 {
+  TURNING_LEFT2_HOME, TURNING_LEFT2_HOME2, TURNING_LEFT2_HOME3, TURNING_LEFT2_HOME4,
+  MOVING_FORWARD2_HOME, MOVING_FORWARD2_HOME2, MOVING_FORWARD2_HOME3, MOVING_FORWARD2_HOME4,
+  STOPPING_HOME2};
+// Initialisiere den Zustand für die Home-Funktion
+HomeState2 homeState2 = TURNING_LEFT2_HOME;
 
-// Initialize the stepper library
-AccelStepper stepper1(AccelStepper::FULL4WIRE, IN1, IN2, IN3, IN4);
-AccelStepper stepper2(AccelStepper::FULL4WIRE, IN5, IN6, IN7, IN8);
-
-// Motor speeds for Forward and Backward movement
-const int motorSpeedForward = 1000; // Adjust as needed
-const int motorSpeedBackward = -1000; // Adjust as needed
-
-// HTML page as a C++ string
-const char* htmlPage = R"=====(
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>ESP32-CAM Robot</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
-      table { margin-Left: auto; margin-Right: auto; }
-      td { padding: 8 px; }
-      .button {
-        background-color: #2f4468;
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 18px;
-        margin: 6px 3px;
-        cursor: pointer;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        -khtml-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
-      }
-      img {  width: auto ;
-        max-width: 100% ;
-        height: auto ; 
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Wischbot</h1>
-    <img src="" id="photo" >
-    <table>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('Forward');" ontouchstart="toggleCheckbox('Forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forward</button></td></tr>
-      <tr><td align="center"><button class="button" onmousedown="toggleCheckbox('Left');" ontouchstart="toggleCheckbox('Left');" onmouseup="toggleCheckbox('Stop');" ontouchend="toggleCheckbox('stop');">Left</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('Right');" ontouchstart="toggleCheckbox('Right');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Right</button></td></tr>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('Backward');" ontouchstart="toggleCheckbox('Backward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Backward</button></td></tr>                   
-    </table>
-   <script>
-   function toggleCheckbox(x) {
-     var xhr = new XMLHttpRequest();
-     xhr.open("GET", "/action?go=" + x, true);
-     xhr.send();
-   }
-   window.onload = document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
-  </script>
-  </body>
-</html>
-)=====";
 
 void setup() {
-  Serial.begin(9600);
+  // Initialisiere die Motoren mit der gewünschten Geschwindigkeit
+  stepper1.setMaxSpeed(maxSpeed);
+  stepper1.setSpeed(desiredSpeed);
 
-  // Connect to Wi-Fi network with SSID and password
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+  stepper2.setMaxSpeed(maxSpeed);
+  stepper2.setSpeed(desiredSpeed);
 
-  // Print local IP address and start web server
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  server.begin();
-
-  // Set the initial speed and acceleration of the motors
-  stepper1.setMaxSpeed(1000); // Adjust as needed
-  stepper2.setMaxSpeed(1000); // Adjust as needed
-  stepper1.setAcceleration(1000); // Adjust as needed
-  stepper2.setAcceleration(1000); // Adjust as needed
+  // sonstige eingaben 
+  pinMode(Enable, OUTPUT);      //Enable
+  digitalWrite(Enable,LOW);     //Enable
+  pinMode(sensorPin, INPUT);    //Setze den Sensor-Pin als Eingang
+  pinMode(wisch, OUTPUT);       //Setze das Wischmodula als Ausgang 
+  pinMode(taster1, INPUT);      //Setzt Taster als eingang
+  pinMode(taster2, INPUT);      //setzt Taster 2 als eingang 
 }
 
+//Roboter machz eine 90° Drehung nach rechts
+void turnRight()
+{
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+  
+  float degree = 180;
+  float moveRev = degree * SteppDegree;
+  stepper1.move(moveRev);
+  stepper2.move(-moveRev);
+
+    // Führe die Drehung aus und warte, bis sie abgeschlossen ist
+  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
+//Roboter macht eine 90° Drehung nach links
+void turnLeft()
+{
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+  
+  float degree = 180;
+  float moveRev = degree * SteppDegree;
+  stepper1.move(-moveRev);
+  stepper2.move(moveRev);
+
+    // Führe die Drehung aus und warte, bis sie abgeschlossen ist
+  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
+// Roboter macht eine 180° Drehung nach links 
+void turnleft180()
+{
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+  
+  float degree = 360;
+  float moveRev = degree * SteppDegree;
+  stepper1.move(-moveRev);
+  stepper2.move(moveRev);
+
+    // Führe die Drehung aus und warte, bis sie abgeschlossen ist
+  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
+//Roboter bewegt sich vorwärts
+void moveForward() {
+  stepper1.setSpeed(desiredSpeed);
+  stepper2.setSpeed(desiredSpeed);
+  stepper1.runSpeed();
+  stepper2.runSpeed();
+  
+}
+
+//Roboter fährt einen kleinen versatzt von 1000 schritte
+void moveShortDistance(int steps) {
+  stepper1.move(steps);
+  stepper2.move(steps);
+  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
+//Motoren Stoppen
+void stopMotors() {
+  stepper1.stop(); // Stoppe Stepper 1
+  stepper2.stop(); // Stoppe Stepper 2
+  while (stepper1.isRunning() || stepper2.isRunning()) {
+    // Warte, bis beide Motoren vollständig angehalten haben
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
+//comming home von oben rechts
+void homeor() {
+  int sensorValue = digitalRead(sensorPin);
+
+  switch(homeState2) {
+    case TURNING_LEFT2_HOME:
+    turnleft180();
+    homeState2 = MOVING_FORWARD2_HOME;
+    break;
+
+    case MOVING_FORWARD2_HOME:
+    moveForward();
+    if (sensorValue == HIGH) {
+      homeState2 = TURNING_LEFT2_HOME2;
+    }
+      break;
+
+    case TURNING_LEFT2_HOME2:
+    turnLeft();
+    homeState2 = MOVING_FORWARD2_HOME2;
+    break;
+
+    case MOVING_FORWARD2_HOME2:
+    moveForward();
+    if (sensorValue == HIGH) {
+      homeState2 = TURNING_LEFT2_HOME3;
+    }
+    break;
+  
+    case TURNING_LEFT2_HOME3:
+      turnleft180();
+      homeState2 = STOPPING_HOME2;
+      break;
+
+    case STOPPING_HOME2:
+      stopMotors();
+      break;
+
+  }
+}
+
+
+//comming Home von unten rechts
+void homeur() {
+  int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
+
+  switch (homeState) {
+    case TURNING_LEFT_HOME:
+      turnLeft(); // Führe eine Linksdrehung aus
+      homeState = MOVING_FORWARD_HOME; // Wechsle den Zustand zu vorwärts bewegen
+      break;
+
+    case MOVING_FORWARD_HOME:
+      moveForward(); // Bewege dich vorwärts
+      if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
+        homeState = TURNING_LEFT_HOME2;
+      } 
+      break;
+
+    case TURNING_LEFT_HOME2:
+    turnLeft();
+    homeState = MOVING_FORWARD_HOME2;
+    break;
+
+    case MOVING_FORWARD_HOME2:
+      moveForward(); // Bewege dich vorwärts
+      if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
+        homeState = TURNING_LEFT_HOME3;
+      } 
+      break;
+
+    case TURNING_LEFT_HOME3:
+    turnLeft();
+    homeState = MOVING_FORWARD_HOME3;
+    break;
+
+    case MOVING_FORWARD_HOME3:
+      moveForward(); // Bewege dich vorwärts
+      if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
+        homeState = TURNING_LEFT_HOME4;
+      }
+      break;
+
+    case TURNING_LEFT_HOME4:
+    turnleft180();
+    homeState = STOPPING_HOME;
+    break;
+
+
+    case STOPPING_HOME:
+      stopMotors(); // Stoppe die Motoren
+      // Zurücksetzen oder weitere Aktionen nach dem Anhalten
+      break;
+  }
+}
+
+
 void loop() {
-  WiFiClient client = server.available();   // Listen for incoming clients
+  int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
-  if (client) {
-    Serial.println("New Client.");
-    String currentLine = "";
+  digitalWrite(wisch,HIGH); // wisch soll an gehen 
 
-    while (client.connected()) {
-      if (client.available()) {
-        char c = client.read();
-        Serial.write(c);
-
-        if (c == '\n') {
-          if (currentLine.length() == 0) {
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
-            client.println();
-            client.print(htmlPage); // Send the HTML page
-
-            if (currentLine.indexOf("Forward") != -1) {
-              Serial.println("Forward");
-              stepper1.setSpeed(motorSpeedForward);
-              stepper2.setSpeed(motorSpeedForward);
-            } else if (currentLine.indexOf("Backward") != -1) {
-              Serial.println("Backward");
-              stepper1.setSpeed(motorSpeedBackward);
-              stepper2.setSpeed(motorSpeedBackward);
-            } else if (currentLine.indexOf("Left") != -1) {
-              Serial.println("Left");
-              stepper1.setSpeed(motorSpeedBackward);
-              stepper2.setSpeed(motorSpeedForward);
-            } else if (currentLine.indexOf("Right") != -1) {
-              Serial.println("Right");
-              stepper1.setSpeed(motorSpeedForward);
-              stepper2.setSpeed(motorSpeedBackward);
-            } else if (currentLine.indexOf("Stop") != -1) {
-              Serial.println("Stop");
-              stepper1.setSpeed(0);
-              stepper2.setSpeed(0);
-            }
-
-            break;
-          } else {
-            currentLine = "";
-          }
-        } else if (c != '\r') {
-          currentLine += c;
+  switch (currentState) {
+    case MOVING_FORWARD:
+      moveForward(); // Bewege dich vorwärts
+      if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
+        if (turnLeftNext) {
+          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
+          turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
+        } else {
+          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
         }
       }
-    }
-    client.stop();
-    Serial.println("Client disconnected.");
-    Serial.println("");
+      break;
+
+    case TURNING_RIGHT:
+      turnRight(); // Führe eine Rechtsabbiegung aus
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = STOPPINGOR;
+      } else {
+        currentState = MOVING_SHORT_DISTANCER;
+      }
+      break;
+
+    case MOVING_SHORT_DISTANCER:
+      moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = STOPPINGOR;
+      } else {
+      currentState = TURNING_RIGHT2;
+      }
+      break;
+
+    case TURNING_RIGHT2:
+      turnRight(); // Führe die zweite Rechtsabbiegung aus
+      currentState = MOVING_FORWARD;
+      turnLeftNext = true; // Setze das Flag, damit beim nächsten Sensor HIGH links abgebogen wird
+      break;
+
+    case TURNING_LEFT:
+      turnLeft(); // Führe eine Linksabbiegung aus
+      // Überprüfe den Sensorwert direkt nach der Drehung
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = STOPPINGUR;
+      } else {
+        currentState = MOVING_SHORT_DISTANCEL; // Kehre zurück zum Zustand vorwärts bewegen
+      }
+      break;
+
+
+    case MOVING_SHORT_DISTANCEL:
+      moveShortDistance(dist);
+      if (digitalRead(sensorPin) == HIGH){
+        currentState = STOPPINGUR;
+      } else {
+      currentState = TURNING_LEFT2;
+      }
+      break;
+
+    case TURNING_LEFT2:
+      turnLeft();
+      currentState = MOVING_FORWARD;
+      break;
+
+
+// Motor stoppt sobal er am ende der Tafel angekommen ist
+    case STOPPINGUR:
+      stopMotors();
+      delay(2000);
+      currentState = HOMEUR;
+      break;
+
+
+    case HOMEUR:
+    homeur();
+    break;
+
+    case STOPPINGOR:
+      stopMotors();
+      delay(2000);
+      currentState = HOMEOR;
+      break;
+
+
+    case HOMEOR:
+    homeor();
+    break;
+
   }
 }
