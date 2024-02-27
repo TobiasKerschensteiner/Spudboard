@@ -278,7 +278,7 @@ void getBattery()
   }
 
 // Setze isCharging basierend auf dem Wert von charging
-  isCharging = (charging == 1);
+ isCharging = (charging == 1);
   
   //Serial.println(Voltage);
   Serial.println(akkustand);
@@ -325,7 +325,7 @@ void drawWiFiDetails() {
     // Zeichne das Passwort text
     tft.drawString("Password:", startX, startY + 2 * lineHeight, 2);  // Verwenden Sie die passende Schriftgröße
 
-    // Zeichne das maskierte Passwort
+    // Zeichne das maskierte Passwort   
     tft.drawString("XXXXXXXXX", startX, startY + 3 * lineHeight, 2);  // Verwenden Sie die passende Schriftgröße
 }
 
@@ -354,6 +354,59 @@ void drawChargingSymbol() {
     }
 }
 
+void zeichneDreieck(int x, int y, int width, int height, uint16_t color, bool spitzeNachUnten) {
+  int x0, y0, x1, y1, x2, y2;
+
+  if (!spitzeNachUnten) {
+    // Spitze nach oben
+    x0 = x + width / 2 + 40;    // Spitze in der Mitte der Breite, 20 Pixel nach rechts verschoben
+    y0 = y;
+    x1 = x;                    // Linke Basis
+    y1 = y + height;
+    x2 = x + width;            // Rechte Basis
+    y2 = y + height;
+  } else {
+    // Spitze nach unten
+    x0 = x + width / 2 - 40;    // Spitze in der Mitte der Breite, 20 Pixel nach links verschoben (für das zweite Dreieck)
+    y0 = y + height;
+    x1 = x;                    // Linke Basis
+    y1 = y;
+    x2 = x + width;            // Rechte Basis
+    y2 = y;
+  }
+
+  // Fülle das Dreieck
+  tft.fillTriangle(x0, y0, x1, y1, x2, y2, color);
+}
+
+
+
+void symbolladen() {
+  tft.fillScreen(TFT_BLACK); // Setze den Hintergrund des gesamten Bildschirms auf Schwarz
+
+  // Definiere die Größe und den Abstand der Dreiecke
+  int breite = 40;
+  int hoehe = 60;
+  int abstand = 0; // Optionaler Abstand zwischen den Dreiecken
+
+  // Position des ersten Dreiecks (Spitze nach oben)
+  int x1 = (tft.width() - 2 * breite - abstand) / 2; // Zentriert beide Dreiecke auf dem Bildschirm
+  int y = (tft.height() - hoehe) / 2; // Vertikale Positionierung für beide Dreiecke
+
+  // Zeichne das erste Dreieck (Spitze nach oben)
+  zeichneDreieck(x1, y -25, breite, hoehe, TFT_YELLOW, false); 
+
+  // Position des zweiten Dreiecks (Spitze nach unten)
+  int x2 = x1 + breite + abstand; // Direkt neben dem ersten Dreieck
+
+  // Zeichne das zweite Dreieck (Spitze nach unten)
+  zeichneDreieck(x2, y + 25, breite, hoehe, TFT_YELLOW, true); 
+}
+
+
+
+
+
 //Akkuanzeige
 void drawBatteryLevel(float batteryLevel) {
   tft.setTextSize(4);
@@ -365,9 +418,9 @@ void drawBatteryLevel(float batteryLevel) {
 
   // Wähle die Farbe basierend auf dem Akkustand
   uint16_t backgroundColor;
-  if (batteryLevel > 0.5) {
+  if (batteryLevel > 0.51) {
     backgroundColor = TFT_GREEN;  // Grün für 100-50%
-  } else if (batteryLevel > 0.2) {
+  } else if (batteryLevel > 0.21) {
     backgroundColor = TFT_YELLOW; // Gelb für 49-20%
   } else {
     backgroundColor = TFT_RED;    // Rot für 19-0%
@@ -639,16 +692,12 @@ void drawMoodBasedOnBatteryLevel(float batteryLevel) {
     // Lösche den Bildschirm vor dem Zeichnen eines neuen Mood
     tft.fillScreen(TFT_BLACK);
 
-    if (batteryLevel > 0.5) { // Akkustand über 50%
+    if (batteryLevel > 0.51) { // Akkustand über 50%
         drawSmiley100_50(); // Zeichne glückliches Smiley
-    } else if (batteryLevel > 0.2) { // Akkustand zwischen 20% und 50%
+    } else if (batteryLevel > 0.21) { // Akkustand zwischen 20% und 50%
         drawSmiley50_20(); // Zeichne monotonen Smiley
     } else { // Akkustand unter 20%
         drawSmiley20_0(); // Zeichne trauriges Smiley
-    }
-
-    if (isCharging) { // Wenn das Gerät geladen wird
-        drawSmileyladen(); // Zeichne schlafendes Smiley
     }
 }
 
@@ -711,12 +760,81 @@ void time() {
   }
 }
 
+void fahren(){
+  static unsigned long lastChangeMillis = 0;
+    static int state = 0;
+    static unsigned long timerPreviousMillis = 0;
+    static unsigned long displayPreviousMillis = 0;
+    const long timerInterval = 1000;
+    const long displayInterval = 5000;
+    unsigned long currentMillis = millis();
 
+    // Timer-Update-Logik
+    if (currentMillis - timerPreviousMillis >= timerInterval) {
+        timerPreviousMillis = currentMillis;
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            if (state == 0) {
+                updateTimerDisplay();
+            }
+        }
+    }
+
+    // Display-Update-Logik
+    if (currentMillis - displayPreviousMillis >= displayInterval) {
+        displayPreviousMillis = currentMillis;
+        state = (state + 1) % 5; // Wechselt zwischen den Zuständen
+
+        // Abhängig vom Zustand werden verschiedene Funktionen aufgerufen
+        switch (state) {
+            case 0:
+                updateTimerDisplay();  // Aktualisiere und zeige den Timer
+                break;
+            case 1:
+                drawMoodBasedOnBatteryLevel(akkustand);
+                break;
+            case 2:
+                drawBatteryLevel(akkustand);  // Zeichne die Akkuanzeige
+                drawChargingSymbol();
+                break;
+            case 3:
+                drawWiFiDetails();  // Zeichne die WLAN-Details
+                drawWLANSymbol();  // Zeichne das WLAN-Symbol
+                break;
+            // Hier könnten weitere Zustände behandelt werden
+        }
+    }
+
+}
+
+void laden(){
+  static unsigned long lastChangeMillis = 0;
+  static int state = 0;
+  static unsigned long timerPreviousMillis = 0;
+  static unsigned long displayPreviousMillis = 0;
+  const long displayInterval = 5000;
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - displayPreviousMillis >= displayInterval) {
+        displayPreviousMillis = currentMillis;
+        state = (state + 1) % 2; // Wechselt zwischen den Zuständen
+
+        // Abhängig vom Zustand werden verschiedene Funktionen aufgerufen
+        switch (state) {
+            case 0:
+                symbolladen();  // Aktualisiere und zeige den Timer
+                break;
+            case 1:
+                drawSmileyladen();
+                break;
+        }
+  }
+}
 
 void setup(void) {
     Serial.begin(9600);
 
-    // Initialisiere das Display zuerst, damit es unabhängig vom WiFi-Status aktiv ist
+    // Initialisiere das Display
     tft.init();
     tft.setTextDatum(MC_DATUM);
     tft.setTextSize(4);
@@ -725,11 +843,9 @@ void setup(void) {
 
     pinMode(13, INPUT_PULLDOWN);
 
+    // Versuche, eine WiFi-Verbindung herzustellen
     WiFi.begin(ssid, password);
-
     unsigned long startAttemptTime = millis();
-
-    // Versuche für maximal 10 Sekunden, eine WiFi-Verbindung herzustellen
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
         delay(500);
         Serial.print(".");
@@ -746,94 +862,33 @@ void setup(void) {
     }
 
     // Initialisiere den Timer und zeige ihn an
-    remainingSeconds = totalSeconds; // Setze den Timer auf den Startwert
-    updateTimerDisplay(); // Zeige den Timer sofort an
-
+    remainingSeconds = totalSeconds;
+    updateTimerDisplay();
 }
 
 void loop() {
-  static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
-    const long interval = 1000; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
-
-    unsigned long currentMillis = millis(); // Aktuelle Zeit seit dem Programmstart in Millisekunden
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
-
-        getBattery();
-        /*if (roboterInBetrieb) {
-            // Verringere den Akkustand nur, wenn der Roboter in Betrieb ist
-            akkustand = akkustand > 0 ? akkustand - 1 : 100; // Verringere den Akkustand um 1% jede Sekunde, setze zurück auf 100% bei 0
-            Serial.println("Akkustand: " + String(akkustand) + "%");
-        }*/
-    }
-    server.handleClient();
-    if (roboterInBetrieb) {
-    unsigned long aktuelleZeit = millis();
-    verstricheneZeit = (aktuelleZeit - startZeitpunkt) / 1000; // Berechnet die verstrichene Zeit in Sekunden
-    }
-    // ueberprueft, ob die Wartezeit nach dem Stopp-Befehl abgelaufen ist
-
-  //Display
-  static unsigned long lastChangeMillis = 0;  // Speichert den Zeitpunkt des letzten Funktionswechsels
-  static int state = 0;  // Zustandsvariable, die bestimmt, welche Funktion ausgeführt wird
-  static unsigned long timerPreviousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Timer aktualisiert wurde
-  static unsigned long displayPreviousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
-  const long timerInterval = 1000; // Intervall für die Aktualisierung des Timers in Millisekunden (1 Sekunde)
-  const long displayInterval = 5000; // Intervall für die Änderung der Display-Anzeige (5 Sekunden)
-
   
-  //unsigned long currentMillis = millis();  // Aktuelle Zeit seit dem Programmstart in Millisekunden
-
-/// Timer-Update-Logik
-  if (currentMillis - timerPreviousMillis >= 1000) { // Überprüfe, ob eine Sekunde vergangen ist
-    timerPreviousMillis += 1000; // Füge 1000 Millisekunden zum letzten Update-Zeitpunkt hinzu
-    if (remainingSeconds > 0) {
-      remainingSeconds--;
-      // Aktualisiere die Timer-Anzeige nur, wenn sich der Timer ändert und der Timer angezeigt werden soll
-      if (state == 0) {
-        updateTimerDisplay();
-      }
-    }
+  if(isCharging) {
+    laden();
+  }
+  else {
+    fahren();
   }
 
-  // Display-Update-Logik (Für andere Zustände als den Timer)
-  if (currentMillis - displayPreviousMillis >= 5000) { // Überprüfe, ob 5 Sekunden vergangen sind
-    displayPreviousMillis += 5000; // Füge 5000 Millisekunden zum letzten Display-Update-Zeitpunkt hinzu
-    state = (state + 1) % 5; // Wechsel zwischen den Zuständen
-    // Führe die Funktion basierend auf dem aktuellen Zustand aus
-  switch (state) {
-    case 0:
-      drawMoodBasedOnBatteryLevel(1.00);
-      delay(5000);
-      break;
-    case 1:
-      time();  // Aktualisiere und zeige den Timer
-      break;
-    case 2: {
-      float batteryLevel = 1.00;  // Beispiel: Akkustand
-      drawBatteryLevel(batteryLevel);  // Zeichne die Akkuanzeige
-      drawChargingSymbol();
-      delay(5000);
-      break;
-      
-      //simulation
-    /*forr (float batteryLevel = 1.0; batteryLevel >= 0; batteryLevel -= 0.01) {
-    drawBatteryLevel(batteryLevel);  // Zeichne den abnehmenden Akkustand
-    delay(100);  // Warte einen Moment, um die Abnahme zu visualisieren
-  }
-
-  for (float batteryLevel = 0; batteryLevel <= 1.0; batteryLevel += 0.01) {
-    drawBatteryLevel(batteryLevel);  // Zeichne den zunehmenden Akkustand
-    delay(100);  // Warte einen Moment, um die Zunahme zu visualisieren
-  }*/
-      
-        }
-    case 3:
-      drawWiFiDetails();  // Zeichne die WLAN-Details
-      drawWLANSymbol();  // Zeichne das WLAN-Symbol
-      delay(5000);
-      break;
-      
-        }
+  unsigned long currentMillis = millis();
+    // Akkustands-Update-Logik
+    static unsigned long previousBatteryUpdateMillis = 0;
+    const long batteryUpdateInterval = 1000;
+    if (currentMillis - previousBatteryUpdateMillis >= batteryUpdateInterval) {
+        previousBatteryUpdateMillis = currentMillis;
+        getBattery();
     }
+
+    // Roboter-Betriebs-Logik
+    if (roboterInBetrieb) {
+        unsigned long aktuelleZeit = millis();
+        verstricheneZeit = (aktuelleZeit - startZeitpunkt) / 1000; // Berechnet die verstrichene Zeit in Sekunden
+    }
+
+    server.handleClient();
 }
