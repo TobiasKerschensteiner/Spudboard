@@ -20,12 +20,12 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 // Konstanten Roboter + Geschwindigkeiten 
 const float stepsPerRevolution = 10800; // Schritte für eine volle Umdrehung im Half-Step-Modus
 const float SteppDegree = 30;
-const int maxSpeed = 10000; //Maximale Geschwindigkeit 
+const int maxSpeed = 10000; //Maximale Geschwindigkeit Mopsgeschwindigkeit!!!
 const int maxspeeddre = 10000; //Maximale Geschwindikeit bei den Drehungen 
 const int besch = 4000; // Beschleunigung
 const int desiredSpeed = 10000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
 const int delays = 2000; //delay von 2 sek
-const int dist = 5000; //Kleiner versatzt von 1000 schritten 
+const int dist = 20000; //Kleiner versatzt von 1000 schritten 
 const int Enable = 18;
 // Pinbelegung Sonstige
 const int taster1 = 34; //Taster stoppen 
@@ -95,7 +95,7 @@ void turnRight()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 2000;
+  float degree = 2100;
   float moveRev = degree * SteppDegree;
   stepper1.move(moveRev);
   stepper2.move(-moveRev);
@@ -115,7 +115,7 @@ void turnLeft()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 2000;
+  float degree = 2100;
   float moveRev = degree * SteppDegree;
   stepper1.move(-moveRev);
   stepper2.move(moveRev);
@@ -135,7 +135,7 @@ void turnleft180()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 360;
+  float degree = 4200;
   float moveRev = degree * SteppDegree;
   stepper1.move(-moveRev);
   stepper2.move(moveRev);
