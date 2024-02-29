@@ -51,9 +51,21 @@ String richtung = "oben";
 AccelStepper stepper1(DRIVER, 4,15);  
 AccelStepper stepper2(DRIVER, 5,17);
 
+//Kalibrierung
+int aktuellx=0;
+int aktuelly=0;
+bool xabgemessen=false;
+bool yabgemessen=false;
+int xabmessung=0;
+int yabmessung=0;
+
+
+
 //Standard
-enum State {MOVING_FORWARD,
-            TURNING_RIGHT, TURNING_RIGHT2,
+enum State {MOVING_FORWARDcalib,
+            TURNING_RIGHTcalib,MOVING_FORWARD2calib,
+            MOVING_START_FORWARD, TURNING_RIGHT_START,MOVING_START_FORWARD2, TURNING_LEFT_START,
+            MOVING_FORWARD,TURNING_RIGHT, TURNING_RIGHT2,
             MOVING_SHORT_DISTANCER, MOVING_SHORT_DISTANCEL,
             TURNING_LEFT, TURNING_LEFT2,
             STOPPINGUR, HOMEUR, STOPPINGOR, HOMEOR,
@@ -177,10 +189,17 @@ void handleRoot() {
         .battery-level { height: 100%; background-color: green; width: 0%; } /* Startet mit 0% Breite */
         .battery::after { content: ''; position: absolute; top: 4px; right: -6px; width: 5px; height: 12px; border: 1px solid black; background-color: black; }
         .status-box { border: 1px solid black;width: 580px; height: 20px;text-align: center;padding:10px;  }
+        h1 {
+    font-family: "Arial", serif;
+}
+        h10 {
+    font-family: "Arial", serif;
+}
+
     </style>
 </head>
 <body>
-    <h1>Tafelwischroboter Steuerung</h1>
+    <h1>SpudBoard Steuerung</h1>
     <div id="buttons">
         <button class='button' onclick="sendCommand('1')">Standardroute</button>
         <button class='button' onclick="sendCommand('6')">Kalibrieren</button>
@@ -198,12 +217,15 @@ void handleRoot() {
     </div>
     <div class='battery'><div class='battery-level' id="batteryLevel"></div></div>
     <span id="batteryText">Akku: --%</span>
-    
     <div class='status-box' id="robotStatus">Status: Standby</div>
     <div id="infoBlock" style="display:none; font-size: 24px;"> 
     <p id="wischFortschritt"></p>
     <p id="wischZeit"></p>
     </div>
+    <h1>   </h1>
+    <h10>Alpay Yalili</h1>
+    <h10>Celine Ernst</h10>
+    <h10>Tobias Kerschensteiner</h1>
     <script>
     function updateUI() {
     fetch('/getStatus')
@@ -267,6 +289,7 @@ void handleRoot() {
     </script>
 </body>
 </html>
+
 )rawliteral";
     server.send(200, "text/html", html);
 }
@@ -434,7 +457,6 @@ void moveForward() {
   stepper2.setSpeed(desiredSpeed);
   stepper1.runSpeed();
   stepper2.runSpeed();
-  
 }
 
 //Roboter fährt einen kleinen versatzt von 1000 schritte
@@ -589,17 +611,100 @@ void loop() {
   digitalWrite(wisch,HIGH); // wisch soll an gehen 
 
   switch (currentState) {
-    case MOVING_FORWARD:
+    
+    //Kalibrierung
+    case MOVING_FORWARDcalib:
       moveForward(); // Bewege dich vorwärts
       richtung = "oben";
+      if (xabgemessen!=true){
+        xabmessung += 1;
+      }
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
-        if (turnLeftNext) {
+          xabgemessen = true;
+          currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
+
+        }
+
+      break;
+
+    case TURNING_RIGHTcalib:
+      turnRight(); // Führe eine Rechtsabbiegung aus
+      if (digitalRead(sensorPin) == HIGH) {
+        currentState = MOVING_FORWARD2calib;
+      }
+      
+      break;
+      
+    case MOVING_FORWARD2calib:
+      moveForward();
+      richtung = "rechts";
+      if(yabgemessen!=true){
+          yabmessung +=1;
+      if (sensorValue==HIGH){
+        yabgemessen= true;
+        isPreparingForHome = true;
+        currentState= PREPARE_COMING_HOME_FROM_RIGHT;
+      }
+      }
+      break;
+
+
+      //Hier Bedingung für Standardroute und Programmstart einfügen für Nachfolgendes
+//Auf startposition fahren
+    case MOVING_START_FORWARD:
+      if (modus == 5){        //Wenn Modus = unten Rechts
+        currentState = TURNING_RIGHT_START;
+      } 
+        else if ((modus=1)|(modus=2)|(modus=4)){    //wenn er ganz normal losfahren soll
+        currentState=MOVING_FORWARD;
+      }
+      moveForward();
+      aktuelly++;
+      if(modus == 3 && aktuelly >= yabgemessen) {
+        aktuelly = 0;
+        currentState = TURNING_RIGHT_START;
+         // Zurücksetzen, falls nötig
+      }
+
+
+      break;
+
+    case TURNING_RIGHT_START:
+      turnRight();
+      currentState = MOVING_START_FORWARD2;
+      break;
+
+    case MOVING_START_FORWARD2:
+      moveForward();
+      aktuellx++;
+      if((modus == 3 && aktuellx >= xabgemessen/2) || (modus == 5 && aktuellx >= xabgemessen/2)) {
+        currentState = TURNING_LEFT_START;
+        aktuellx = 0; // Zurücksetzen, falls nötig
+      }
+      break;
+
+    case TURNING_LEFT_START:
+      turnLeft();
+      currentState = MOVING_FORWARD;
+      break;
+  
+
+    case MOVING_FORWARD:
+      moveForward(); // Bewege dich vorwärts
+      aktuelly+=1;
+      richtung = "oben";
+      if (((sensorValue == HIGH)&(turnLeftNext))|((turnLeftNext)&((aktuelly=yabgemessen/2)&((modus=2)|(modus=3))))) { // Wenn der Sensor 1 ausgibt
+
           currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
-        } else {
-          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+          aktuelly=0;
         }
-      }
+      else if(((sensorValue==HIGH)&(modus=1|2|3))|((aktuelly>=yabgemessen)&(modus=4|5)))
+      {
+          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+          aktuelly=0;
+        }
+      
       break;
 
     case TURNING_RIGHT:
@@ -614,7 +719,8 @@ void loop() {
     case MOVING_SHORT_DISTANCER:
       moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
       richtung="rechts";
-      if (digitalRead(sensorPin) == HIGH) {
+      aktuellx+1;
+      if ((digitalRead(sensorPin) == HIGH)|(aktuellx=xabgemessen/2)) {
         currentState = STOPPINGOR;
       } else {
       currentState = TURNING_RIGHT2;
@@ -642,7 +748,8 @@ void loop() {
     case MOVING_SHORT_DISTANCEL:
       moveShortDistance(dist);
       richtung="rechts";
-      if (digitalRead(sensorPin) == HIGH){
+      aktuellx+=1;
+      if ((digitalRead(sensorPin) == HIGH)|(aktuellx=xabgemessen/2)){
         currentState = STOPPINGUR;
       } else {
       currentState = TURNING_LEFT2;
