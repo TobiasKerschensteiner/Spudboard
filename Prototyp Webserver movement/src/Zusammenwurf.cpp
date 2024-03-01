@@ -71,9 +71,9 @@ enum State {MOVING_FORWARDcalib,
             STOPPINGUR, HOMEUR, STOPPINGOR, HOMEOR,
             PREPARE_COMING_HOME_FROM_BOTTOM,
             PREPARE_COMING_HOME_FROM_TOP,
-            PREPARE_COMING_HOME_FROM_RIGHT};
+            PREPARE_COMING_HOME_FROM_RIGHT,ACTIVE};
             
-State currentState = MOVING_FORWARD;
+State currentState = MOVING_FORWARDcalib;
 bool hasTurnedRight = false;
 bool turnLeftNext = false; // Flag, um zu bestimmen, ob als nächstes nach links gedreht werden soll
 
@@ -120,6 +120,7 @@ void setModus() {
 
     aktuellerModus = server.arg("modus").toInt();
     roboterInBetrieb = true; // Nehmen wir an, der Roboter ist aktiv, sobald ein Modus gesetzt wird.
+    currentState=ACTIVE;      //??
     startZeitpunkt = millis(); // Speichert den aktuellen Zeitpunkt
     // Hier geben wir in der seriellen Konsole den aktuellen Modus aus.
     switch (aktuellerModus) {
@@ -149,7 +150,7 @@ void setModus() {
             roboterInBetrieb = false; // Ungültiger Modus wurde gesetzt.
             break;
     }
-
+    Serial.println("Modus gesetzt auf: " + String(aktuellerModus));
     server.send(200, "text/plain", "Modus gesetzt auf " + server.arg("modus"));
 }
 
@@ -223,9 +224,9 @@ void handleRoot() {
     <p id="wischZeit"></p>
     </div>
     <h1>   </h1>
-    <h10>Alpay Yalili</h1>
+    <h10>Alpay Yalili</h10>
     <h10>Celine Ernst</h10>
-    <h10>Tobias Kerschensteiner</h1>
+    <h10>Tobias Kerschensteiner</h10>
     <script>
     function updateUI() {
     fetch('/getStatus')
@@ -520,6 +521,7 @@ void homeor() {
 
     case STOPPING_HOME2:
       stopMotors();
+      currentState = ACTIVE;
       break;
 
   }
@@ -650,6 +652,34 @@ void loop() {
 
 
       //Hier Bedingung für Standardroute und Programmstart einfügen für Nachfolgendes
+    case ACTIVE:
+    if (roboterInBetrieb==true)
+    {
+      switch (aktuellerModus) {
+                    case 1: // Beispiel für einen Modus
+                        currentState = MOVING_START_FORWARD;
+                        break;
+                    case 6: // Kalibrierungsmodus
+                        currentState = MOVING_FORWARDcalib;
+                        break;
+                    // Füge weitere Modi nach Bedarf hinzu
+                    case 2:
+                        currentState = MOVING_START_FORWARD;
+                        break;
+                    case 3:
+                        currentState = MOVING_START_FORWARD;
+                        break;
+                    case 4:
+                        currentState = MOVING_START_FORWARD;
+                        break;
+                    case 5:
+                        currentState = MOVING_START_FORWARD;
+                        break;                                        
+                    default:
+                        // Standardverhalten oder Fehlerbehandlung
+                        break;
+    }
+
 //Auf startposition fahren
     case MOVING_START_FORWARD:
       if (modus == 5){        //Wenn Modus = unten Rechts
