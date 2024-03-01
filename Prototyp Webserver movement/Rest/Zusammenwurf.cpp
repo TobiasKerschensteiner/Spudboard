@@ -41,7 +41,7 @@ const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
 //const int SCL = 23; //gryo
 //const int SDA = 22; //gyro 
-
+int charging = 0;
 bool isPreparingForHome = false;
 
 String richtung = "oben";
@@ -119,7 +119,6 @@ void setModus() {
 
     aktuellerModus = server.arg("modus").toInt();
     roboterInBetrieb = true; // Nehmen wir an, der Roboter ist aktiv, sobald ein Modus gesetzt wird.
-    currentState=ACTIVE;      //??
     startZeitpunkt = millis(); // Speichert den aktuellen Zeitpunkt
     // Hier geben wir in der seriellen Konsole den aktuellen Modus aus.
     switch (aktuellerModus) {
@@ -343,10 +342,22 @@ void getBattery()
 {
   int Voltage = analogRead(34);
 
-  akkustand = map(Voltage,2950,4095,0,100);
+  akkustand = map(Voltage,2950,4095,0,120);
+
+  if (akkustand >= 100)
+  {
+    charging = 1;
+    akkustand = 100;
+  }
+  else 
+  {
+    charging = 0;
+  }
+
 
   //Serial.println(Voltage);
-  Serial.println(akkustand);
+  //Serial.println(akkustand);
+  //Serial.println(charging);
 }
 
 
@@ -383,7 +394,7 @@ void setup() {
     server.on("/", handleRoot);
     server.on("/setModus", setModus);
     server.on("/stopp", handleStopp);
-server.on("/stopp", []() {
+    server.on("/stopp", []() {
     if (roboterInBetrieb || zurueckkehren) {
         roboterInBetrieb = false;
         zurueckkehren = false; // Setzen Sie die entsprechenden Zustände
@@ -404,7 +415,7 @@ server.on("/stopp", []() {
     }
     server.send(200, "text/plain", "Roboter gestoppt. Kehrt nach Hause zurück, falls nötig.");
 });
-
+    currentState = MOVING_FORWARDcalib; // Starte mit Kalibrierung
     server.on("/getStatus", getStatus);
     server.begin();
     Serial.println("Webserver gestartet");
@@ -418,7 +429,7 @@ void turnRight()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 180;
+  float degree = 2100;
   float moveRev = degree * SteppDegree;
   stepper1.move(moveRev);
   stepper2.move(-moveRev);
@@ -438,7 +449,7 @@ void turnLeft()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 180;
+  float degree = 2100;
   float moveRev = degree * SteppDegree;
   stepper1.move(-moveRev);
   stepper2.move(moveRev);
@@ -458,7 +469,7 @@ void turnleft180()
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
   
-  float degree = 360;
+  float degree = 4200;
   float moveRev = degree * SteppDegree;
   stepper1.move(-moveRev);
   stepper2.move(moveRev);
@@ -636,11 +647,12 @@ void loop() {
     case MOVING_FORWARDcalib:
       moveForward(); // Bewege dich vorwärts
       richtung = "oben";
-      if (xabgemessen!=true){
-        xabmessung += 1;
+      if (yabgemessen!=true){
+        yabmessung += 1;
+        Serial.println(yabmessung);
       }
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
-          xabgemessen = true;
+          yabgemessen = true;
           currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
 
         }
@@ -649,19 +661,18 @@ void loop() {
 
     case TURNING_RIGHTcalib:
       turnRight(); // Führe eine Rechtsabbiegung aus
-      if (digitalRead(sensorPin) == HIGH) {
         currentState = MOVING_FORWARD2calib;
-      }
       
       break;
       
     case MOVING_FORWARD2calib:
       moveForward();
       richtung = "rechts";
-      if(yabgemessen!=true){
-          yabmessung +=1;
+      if(xabgemessen!=true){
+          xabmessung +=1;
+          Serial.println(xabmessung);
       if (sensorValue==HIGH){
-        yabgemessen= true;
+        xabgemessen= true;
         isPreparingForHome = true;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
       }
