@@ -228,6 +228,14 @@ void handleRoot() {
     <h10>Celine Ernst</h10>
     <h10>Tobias Kerschensteiner</h10>
     <script>
+    function sendCommand(modus) {
+    const url = modus === 'stop' ? '/stopp' : '/setModus?modus=' + modus;
+    fetch(url)
+        .then(response => response.text())
+        .then(() => {
+            updateUI(); // Stellen Sie sicher, dass updateUI den aktuellen Status korrekt reflektiert
+        });
+        }
     function updateUI() {
     fetch('/getStatus')
         .then(response => response.json())
@@ -386,7 +394,18 @@ server.on("/stopp", []() {
     } else {
         server.send(200, "text/plain", "Roboter ist nicht in Betrieb.");
     }
+    if (richtung == "unten") {
+        currentState = PREPARE_COMING_HOME_FROM_BOTTOM;
+        isPreparingForHome = true;
+    } else if (richtung == "oben") {
+        currentState = PREPARE_COMING_HOME_FROM_TOP;
+        isPreparingForHome = true;
+    } else if (richtung == "rechts") {
+        currentState = PREPARE_COMING_HOME_FROM_RIGHT;
+    }
+    server.send(200, "text/plain", "Roboter gestoppt. Kehrt nach Hause zurück, falls nötig.");
 });
+
     server.on("/getStatus", getStatus);
     server.begin();
     Serial.println("Webserver gestartet");
@@ -678,7 +697,7 @@ void loop() {
                     default:
                         // Standardverhalten oder Fehlerbehandlung
                         break;
-    }
+    }}
 
 //Auf startposition fahren
     case MOVING_START_FORWARD:
@@ -845,4 +864,4 @@ void loop() {
     // Verhindere weitere Aktionen in diesem Durchlauf
     return;
   }
-}
+  }
