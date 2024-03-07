@@ -39,7 +39,7 @@ const int taster1 = 34; //Taster stoppen
 const int taster2 = 35; // Taster Standardroute
 const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
-//const int SCL = 23; //gryo
+//const int SCL = 23; //gyro
 //const int SDA = 22; //gyro 
 int charging = 0;
 bool isPreparingForHome = false;
@@ -446,6 +446,7 @@ void turnRight()
 //Roboter macht eine 90° Drehung nach links
 void turnLeft()
 {
+  
   stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
   stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
   stepper2.setMaxSpeed(maxspeeddre);
@@ -461,6 +462,7 @@ void turnLeft()
     stepper1.run();
     stepper2.run();
   }
+  
 }
 
 // Roboter macht eine 180° Drehung nach links 
@@ -641,7 +643,7 @@ void loop() {
             Serial.println("Akkustand: " + String(akkustand) + "%");
         }*/
     }
-    server.handleClient();
+    //server.handleClient();
     if (roboterInBetrieb) {
     unsigned long aktuelleZeit = millis();
     verstricheneZeit = (aktuelleZeit - startZeitpunkt) / 1000; // Berechnet die verstrichene Zeit in Sekunden
@@ -683,7 +685,7 @@ void loop() {
       isCalibratingX = true; // Beginn der X-Kalibrierung
       if (sensorValue==HIGH){
         isCalibratingX = false; // Ende der X-Kalibrierung
-        isPreparingForHome = true;
+        isPreparingForHome = false;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
       }
       
