@@ -55,9 +55,11 @@ int aktuellx=0;
 int aktuelly=0;
 bool xabgemessen=false;
 bool yabgemessen=false;
-int xabmessung=0;
-int yabmessung=0;
+long xabmessung=0;
+long yabmessung=0;
 
+bool isCalibratingX = false;
+bool isCalibratingY = false;
 
 
 //Standard
@@ -615,10 +617,21 @@ void homeur() {
 void loop() {
 //Webserver Input
     static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
-    const long interval = 1000; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
+    const long interval = 100; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
+          if (isCalibratingY) {
+            yabmessung++; // Zähle hoch, wenn in Y-Kalibrierung
+           }
+          if (isCalibratingX) {
+            xabmessung++; // Zähle hoch, wenn in X-Kalibrierung
+          }
+
+        
+        
+        
+        
         previousMillis = currentMillis;
 
         getBattery();
@@ -634,6 +647,7 @@ void loop() {
     verstricheneZeit = (aktuelleZeit - startZeitpunkt) / 1000; // Berechnet die verstrichene Zeit in Sekunden
     }
     // ueberprueft, ob die Wartezeit nach dem Stopp-Befehl abgelaufen ist
+  
 
 
   //Standardroute State 
@@ -647,10 +661,7 @@ void loop() {
     case MOVING_FORWARDcalib:
       moveForward(); // Bewege dich vorwärts
       richtung = "oben";
-      if (yabgemessen!=true){
-        yabmessung += 1;
-        Serial.println(yabmessung);
-      }
+      isCalibratingY = true; // Beginn der Y-Kalibrierung
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
           yabgemessen = true;
           currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
@@ -668,15 +679,13 @@ void loop() {
     case MOVING_FORWARD2calib:
       moveForward();
       richtung = "rechts";
-      if(xabgemessen!=true){
-          xabmessung +=1;
-          Serial.println(xabmessung);
+      isCalibratingX = true; // Beginn der X-Kalibrierung
       if (sensorValue==HIGH){
-        xabgemessen= true;
+        isCalibratingX = false; // Ende der X-Kalibrierung
         isPreparingForHome = true;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
       }
-      }
+      
       break;
 
 
@@ -752,13 +761,13 @@ void loop() {
       moveForward(); // Bewege dich vorwärts
       aktuelly+=1;
       richtung = "oben";
-      if (((sensorValue == HIGH)&(turnLeftNext))|((turnLeftNext)&((aktuelly=yabgemessen/2)&((modus=2)|(modus=3))))) { // Wenn der Sensor 1 ausgibt
+      if (((sensorValue == HIGH)&(turnLeftNext))|((turnLeftNext)&((aktuelly==yabgemessen/2)&((modus==2)|(modus==3))))) { // Wenn der Sensor 1 ausgibt
 
           currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
           aktuelly=0;
         }
-      else if(((sensorValue==HIGH)&(modus=1|2|3))|((aktuelly>=yabgemessen)&(modus=4|5)))
+      else if(((sensorValue==HIGH)&(modus==1|2|3))|((aktuelly>=yabgemessen)&(modus==4|5)))
       {
           currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
           aktuelly=0;
@@ -779,7 +788,7 @@ void loop() {
       moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
       richtung="rechts";
       aktuellx+1;
-      if ((digitalRead(sensorPin) == HIGH)|(aktuellx=xabgemessen/2)) {
+      if ((digitalRead(sensorPin) == HIGH)|(aktuellx==xabgemessen/2)) {
         currentState = STOPPINGOR;
       } else {
       currentState = TURNING_RIGHT2;
@@ -808,7 +817,7 @@ void loop() {
       moveShortDistance(dist);
       richtung="rechts";
       aktuellx+=1;
-      if ((digitalRead(sensorPin) == HIGH)|(aktuellx=xabgemessen/2)){
+      if ((digitalRead(sensorPin) == HIGH)|(aktuellx==xabgemessen/2)){
         currentState = STOPPINGUR;
       } else {
       currentState = TURNING_LEFT2;
