@@ -43,8 +43,8 @@ const int taster2 = 32; // Taster Standardroute
 const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
 const int BL = 12; // Backlight Display
-const int SCL = 23; //gyro
-const int SDA = 22; //gyro 
+//const int SCL = 23; //gyro
+//const int SDA = 22; //gyro 
 int charging = 0;
 bool isPreparingForHome = false;
 
@@ -117,6 +117,7 @@ int modus;
 MPU6050 mpu(Wire);
 TFT_eSPI tft = TFT_eSPI();  // Initialisiere die Bibliothek für das TFT-Display
 
+unsigned long timer = 0;
 
 unsigned long previousMillis = 0;  // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
 const long interval = 1000;  // Intervall für die Aktualisierung der Uhrzeit in Millisekunden (1000 ms = 1 Sekunde)
