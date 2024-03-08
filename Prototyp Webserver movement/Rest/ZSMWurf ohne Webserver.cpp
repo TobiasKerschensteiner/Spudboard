@@ -638,34 +638,31 @@ drawThickLine(centerX + eyeOffsetX, centerY - eyeOffsetY, // Startpunkt in der M
     tft.fillCircle(lineAndDotsStartX + qMarkSize, lineAndDotStartY + qMarkSize, 1, TFT_WHITE);
 }
 
-
+// Funktion zum Zeichnen eines gefüllten Segments
 void drawFilledSegment(int centerX, int centerY, int radius, float startAngle, float endAngle, uint32_t color) {
-  // Definiere die Segmentgröße (in Grad)
-  float segmentSize = 5.0;
+  float segmentSize = 5.0; // Segmentgröße in Grad
 
   for (float angle = startAngle; angle < endAngle; angle += segmentSize) {
     float angleRad = angle * DEG_TO_RAD; // Umrechnung in Radiant
-    float nextAngleRad = (angle + segmentSize) * DEG_TO_RAD; // Nächster Winkel in Radiant
+    float nextAngleRad = (angle + segmentSize) * DEG_TO_RAD;
 
-    // Berechne die Koordinaten der Eckpunkte des Segments
     int x1 = centerX + radius * cos(angleRad);
     int y1 = centerY + radius * sin(angleRad);
     int x2 = centerX + radius * cos(nextAngleRad);
     int y2 = centerY + radius * sin(nextAngleRad);
 
-    // Zeichne das Segment als Dreieck
     tft.fillTriangle(centerX, centerY, x1, y1, x2, y2, color);
   }
 }
 
-//Hintergrund Timer anzeige
+// Funktion zur Aktualisierung der Timer-Anzeige
 void updateTimerDisplay() {
   tft.setTextSize(4);
-  // Berechne den Winkel für den Füll-Effekt basierend auf der verbleibenden Zeit
-  float angle = 360.0 * (1.0 - (float)remainingSeconds / (float)totalSeconds);
 
-  // Lösche den Bildschirm
-  tft.fillScreen(TFT_BLACK);
+  // Berechne den Winkel basierend auf der verstrichenen Zeit
+  float angle = 360.0 * (float)elapsedSeconds / 60.0; // 60.0 für eine volle Minute
+
+  tft.fillScreen(TFT_BLACK); // Lösche den Bildschirm
 
   // Zeichne den gefüllten Sektor
   int centerX = tft.width() / 2;
@@ -674,28 +671,30 @@ void updateTimerDisplay() {
   drawFilledSegment(centerX, centerY, radius, 0, angle, TFT_CYAN);
 
   // Bereite die Zeit als Zeichenkette vor und zeichne sie
-  int minutes = remainingSeconds / 60;
-  int seconds = remainingSeconds % 60;
+  int minutes = elapsedSeconds / 60;
+  int seconds = elapsedSeconds % 60;
   char timeStr[6];
-  sprintf(timeStr, "%02d:%02d", minutes, seconds);  // Formatieren der Zeit im Format mm:ss
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);  // Textfarbe auf Weiß mit schwarzem Hintergrund setzen
-  tft.drawString(timeStr, centerX, centerY); // Zeichne die Zeit in der Mitte des Bildschirms
+  sprintf(timeStr, "%02d:%02d", minutes, seconds);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString(timeStr, centerX, centerY);
 }
 
-//Funktion Timer
+// Timer-Funktion
 void time() {
-  unsigned long currentMillis = millis();  // Aktuelle Zeit seit Programmstart in Millisekunden
+  unsigned long currentMillis = millis();
 
-  if (currentMillis - previousMillis >= interval) {  // Überprüfe, ob das festgelegte Intervall vergangen ist
-    previousMillis = currentMillis;  // Aktualisiere die letzte Aktualisierungszeit
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
 
-    // Dekrementiere die verbleibenden Sekunden jede Sekunde
-    if (remainingSeconds > 0) {
-      remainingSeconds--;
-      updateTimerDisplay();  // Aktualisiere die Anzeige mit der neuen Zeit und dem neuen Hintergrund
-    } 
+    elapsedSeconds++; // Inkrementiere die verstrichene Zeit jede Sekunde
+    updateTimerDisplay(); // Aktualisiere die Anzeige
+
+    if (elapsedSeconds >= 60) { // Wenn eine Minute erreicht ist, halte den Timer an
+      // Optional: Füge hier Code ein, um etwas zu tun, wenn der Timer eine Minute erreicht
+    }
   }
 }
+
 
 void fahren(){
   static unsigned long lastChangeMillis = 0;
