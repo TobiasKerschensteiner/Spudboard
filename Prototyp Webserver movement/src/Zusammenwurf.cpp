@@ -17,8 +17,8 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 #include <ArduinoJson.h>
 
 // WLAN-Zugangsdaten
-const char* ssid = "Alpakhan";
-const char* password = "Bananenmus";
+const char* ssid = "NOTHING1";
+const char* password = "123456789";
 
 //#define HALFSTEP 8
 #ifndef DRIVER
@@ -833,11 +833,11 @@ void loop() {
       break;
 
 
-// Motor stoppt sobal er am ende der Tafel angekommen ist
+// Motor stoppt sobald er am Ende der Tafel angekommen ist
     case STOPPINGUR:
       stopMotors();
       delay(2000);
-      currentState = HOMEUR;
+      currentState = ACTIVE;
       break;
 
 
@@ -848,7 +848,7 @@ void loop() {
     case STOPPINGOR:
       stopMotors();
       delay(2000);
-      currentState = HOMEOR;
+      currentState = ACTIVE;
       break;
 
 
