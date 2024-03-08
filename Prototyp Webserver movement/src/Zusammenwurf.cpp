@@ -37,10 +37,11 @@ const int delays = 2000; //delay von 2 sek
 const int dist = 20000; //Kleiner versatzt von 1000 schritten 
 const int Enable = 18;
 // Pinbelegung Sonstige
-const int taster1 = 34; //Taster stoppen 
-const int taster2 = 35; // Taster Standardroute
+const int taster1 = 13; //Taster stoppen 
+const int taster2 = 32; // Taster Standardroute
 const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
+const int BL = 12; // Backlight Display
 //const int SCL = 23; //gyro
 //const int SDA = 22; //gyro 
 int charging = 0;
@@ -104,7 +105,6 @@ bool roboterInBetrieb = false;
 int akkustand = 0; // Beispiel fuer einen Akkustand
 int aktuellerModus = 0; // Globale Variable fuer den aktuellen Modus
 int fortschritt = 0;
-int charging = 0;
 int verstricheneZeit;
 bool aufStart = true; // 
 unsigned long startZeitpunkt = 0; 
@@ -1010,7 +1010,7 @@ void setup(void) {
   pinMode(wisch, OUTPUT);       //Setze das Wischmodula als Ausgang 
   pinMode(taster1, INPUT);      //Setzt Taster als eingang
   pinMode(taster2, INPUT);      //setzt Taster 2 als eingang 
-
+  pinMode(BL,OUTPUT);           //BL als Ausgang
   //webserver Setup 
       Serial.begin(9600);
 
@@ -1058,6 +1058,8 @@ void setup(void) {
     // Initialisiere den Timer und zeige ihn an
     remainingSeconds = totalSeconds;
     updateTimerDisplay();
+
+    digitalWrite(BL,HIGH); //Display Backlight anschalten
 }
 
 //Roboter machz eine 90° Drehung nach rechts
