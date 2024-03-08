@@ -17,6 +17,7 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 #include <ArduinoJson.h>
 #include <TFT_eSPI.h>
 #include <math.h>
+#include <MPU6050_light.h>
 
 // WLAN-Zugangsdaten
 const char* ssid = "NOTHING1";
@@ -42,8 +43,8 @@ const int taster2 = 32; // Taster Standardroute
 const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
 const int BL = 12; // Backlight Display
-//const int SCL = 23; //gyro
-//const int SDA = 22; //gyro 
+const int SCL = 23; //gyro
+const int SDA = 22; //gyro 
 int charging = 0;
 bool isPreparingForHome = false;
 
@@ -113,7 +114,9 @@ const unsigned long wartezeit = 5000; // 5 Sekunden Wartezeit in Millisekunden
 bool zurueckkehren = false; // Neue Zustandsvariable fuer "Zurueckkehren"
 int modus;
 
+MPU6050 mpu(Wire);
 TFT_eSPI tft = TFT_eSPI();  // Initialisiere die Bibliothek für das TFT-Display
+
 
 unsigned long previousMillis = 0;  // Speichert den letzten Zeitpunkt, zu dem das Display aktualisiert wurde
 const long interval = 1000;  // Intervall für die Aktualisierung der Uhrzeit in Millisekunden (1000 ms = 1 Sekunde)
@@ -993,6 +996,21 @@ void laden(){
 }
 
 void setup(void) {
+  pinMode(4, OUTPUT);
+  digitalWrite(4, HIGH);
+  Serial.begin(9600);
+  Wire.begin();
+
+  byte status = mpu.begin();
+  Serial.print(F("MPU6050 status: "));
+  Serial.println(status);
+  while (status != 0) {}  // Stoppe alles, wenn keine Verbindung zum MPU6050 hergestellt werden konnte
+
+  Serial.println(F("Calculating offsets, do not move MPU6050"));
+  delay(1000);
+  mpu.calcOffsets();  // Kalibriere Gyro und Accelerometer
+  Serial.println("Done!\n");
+
   tft.init();
   tft.setTextDatum(MC_DATUM);
   tft.setTextSize(4);
@@ -1258,6 +1276,29 @@ void homeur() {
 
 
 void loop() {
+  mpu.update();
+
+  if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
+    Serial.print("X : ");
+    Serial.print(mpu.getAngleX());
+    Serial.print("\tY : ");
+    Serial.print(mpu.getAngleY());
+    Serial.print("\tZ : ");
+    Serial.println(mpu.getAngleZ());
+    timer = millis();
+
+    // Rotation des Displays anpassen basierend auf der X-Achsen Neigung
+    if (mpu.getAngleX() > 45) { // Neigung nach unten
+      tft.setRotation(3);
+    } else if (mpu.getAngleX() < -45) { // Neigung nach oben
+      tft.setRotation(1);
+    } else if (mpu.getAngleY() > 45) { // Neigung nach rechts
+      tft.setRotation(0);
+    } else if (mpu.getAngleY() < -45) { // Neigung nach links
+      tft.setRotation(2);
+    }
+  }
+
 //Display Anzeige
   if(isCharging) {
     laden();
