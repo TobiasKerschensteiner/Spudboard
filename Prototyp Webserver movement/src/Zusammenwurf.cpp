@@ -125,7 +125,7 @@ int remainingSeconds = totalSeconds;  // Verbleibende Zeit des Countdowns in Sek
 
 bool isCharging = true; // Setzen Sie diese Variable entsprechend dem Ladezustand des Akkus
 bool isWifiConnected = true; // setzten endprechen ob mit WLAn verbunden oder nicht 
-bool kalib = false; // nur zum testen da um zu schauen ob die funtnkion get muss noch an alpay angebundne werden 
+bool kalib = true; // nur zum testen da um zu schauen ob die funtnkion get muss noch an alpay angebundne werden 
 
 //Webserver Modi mit aktueller Modus Variable und Cases
 
@@ -1263,7 +1263,7 @@ void loop() {
     laden();
   }
   if(kalib) {
-    drawSmileyThinking();
+    //drawSmileyThinking();
   }
   else {
     fahren();
@@ -1317,7 +1317,7 @@ void loop() {
       richtung = "oben";
       isCalibratingY = true; // Beginn der Y-Kalibrierung
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
-          moveShortDistance(-dist);
+          //moveShortDistance(-dist);
           isCalibratingY = false;
           yabgemessen = true;
           currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
@@ -1340,6 +1340,7 @@ void loop() {
         moveShortDistance(-dist);
         isCalibratingX = false; // Ende der X-Kalibrierung
         isPreparingForHome = false;
+        kalib=false;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
       }
       
