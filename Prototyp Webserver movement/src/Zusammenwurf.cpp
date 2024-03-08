@@ -102,7 +102,7 @@ HomeState2 homeState2 = TURNING_LEFT2_HOME;
 //WEBSERVER VARIABLEN
 WebServer server(80);
 bool roboterInBetrieb = false;
-int akkustand = 0; // Beispiel fuer einen Akkustand
+float akkustand = 0; // Beispiel fuer einen Akkustand
 int aktuellerModus = 0; // Globale Variable fuer den aktuellen Modus
 int fortschritt = 0;
 int verstricheneZeit;
@@ -125,7 +125,7 @@ int remainingSeconds = totalSeconds;  // Verbleibende Zeit des Countdowns in Sek
 
 bool isCharging = true; // Setzen Sie diese Variable entsprechend dem Ladezustand des Akkus
 bool isWifiConnected = true; // setzten endprechen ob mit WLAn verbunden oder nicht 
-bool kalib = true; // nur zum testen da um zu schauen ob die funtnkion get muss noch an alpay angebundne werden 
+bool kalib = false; // nur zum testen da um zu schauen ob die funtnkion get muss noch an alpay angebundne werden 
 
 //Webserver Modi mit aktueller Modus Variable und Cases
 
@@ -361,7 +361,9 @@ void getBattery()
 {
   int Voltage = analogRead(34);
 
-  akkustand = map(Voltage,2950,4095,0,120);
+  akkustand = map(Voltage,2950,4095,0,100);
+  akkustand = akkustand/100;
+  Serial.println(akkustand);
 
   if (akkustand >= 100)
   {
