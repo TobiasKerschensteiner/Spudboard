@@ -695,7 +695,7 @@ void loop() {
       }
       
       break;
-
+//hi
 
       //Hier Bedingung für Standardroute und Programmstart einfügen für Nachfolgendes
     case ACTIVE:
