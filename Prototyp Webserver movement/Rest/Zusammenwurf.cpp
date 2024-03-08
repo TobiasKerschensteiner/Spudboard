@@ -670,6 +670,7 @@ void loop() {
       isCalibratingY = true; // Beginn der Y-Kalibrierung
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
           yabgemessen = true;
+          moveShortDistance(-dist/2);
           currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
 
         }
@@ -688,6 +689,7 @@ void loop() {
       isCalibratingX = true; // Beginn der X-Kalibrierung
       if (sensorValue==HIGH){
         isCalibratingX = false; // Ende der X-Kalibrierung
+        moveShortDistance(-dist/2);
         isPreparingForHome = true;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
       }
