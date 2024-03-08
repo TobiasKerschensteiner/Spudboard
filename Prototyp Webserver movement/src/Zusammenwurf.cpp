@@ -486,13 +486,19 @@ void turnleft180()
 }
 
 //Roboter bewegt sich vorwärts
-void moveForward() {
+void moveForward(int sensorPin) {
   stepper1.setSpeed(desiredSpeed);
   stepper2.setSpeed(desiredSpeed);
-  stepper1.runSpeed();
-  stepper2.runSpeed();
-}
 
+    stepper1.run();
+    stepper2.run();
+
+  if (digitalRead(sensorPin) == HIGH) {
+    // Stoppen Sie die Bewegung, wenn der Sensor ausgelöst wird
+    stepper1.stop();
+    stepper2.stop();
+}
+}
 //Roboter fährt einen kleinen versatzt von 1000 schritte
 void moveShortDistance(int steps) {
   stepper1.move(steps);
@@ -529,7 +535,7 @@ void homeor() {
     break;
 
     case MOVING_FORWARD2_HOME:
-    moveForward();
+    moveForward(sensorValue);
     if (sensorValue == HIGH) {
       homeState2 = TURNING_LEFT2_HOME2;
     }
@@ -541,7 +547,7 @@ void homeor() {
     break;
 
     case MOVING_FORWARD2_HOME2:
-    moveForward();
+    moveForward(sensorValue);
     if (sensorValue == HIGH) {
       homeState2 = TURNING_LEFT2_HOME3;
     }
@@ -572,7 +578,7 @@ void homeur() {
       break;
 
     case MOVING_FORWARD_HOME:
-      moveForward(); // Bewege dich vorwärts
+      moveForward(sensorValue); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         homeState = TURNING_LEFT_HOME2;
       } 
@@ -584,7 +590,7 @@ void homeur() {
     break;
 
     case MOVING_FORWARD_HOME2:
-      moveForward(); // Bewege dich vorwärts
+      moveForward(sensorValue); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         homeState = TURNING_LEFT_HOME3;
       } 
@@ -596,7 +602,7 @@ void homeur() {
     break;
 
     case MOVING_FORWARD_HOME3:
-      moveForward(); // Bewege dich vorwärts
+      moveForward(sensorValue); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         homeState = TURNING_LEFT_HOME4;
       }
@@ -661,10 +667,11 @@ void loop() {
     
     //Kalibrierung
     case MOVING_FORWARDcalib:
-      moveForward(); // Bewege dich vorwärts
+      moveForward(sensorValue); // Bewege dich vorwärts
       richtung = "oben";
       isCalibratingY = true; // Beginn der Y-Kalibrierung
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
+          moveShortDistance(-dist/2);
           isCalibratingY = false;
           yabgemessen = true;
           currentState = TURNING_RIGHTcalib; // Wechsle den Zustand zu Rechtsabbiegung
@@ -680,10 +687,11 @@ void loop() {
       break;
       
     case MOVING_FORWARD2calib:
-      moveForward();
+      moveForward(sensorValue);
       richtung = "rechts";
       isCalibratingX = true; // Beginn der X-Kalibrierung
       if (sensorValue==HIGH){
+        moveShortDistance(-dist/2);
         isCalibratingX = false; // Ende der X-Kalibrierung
         isPreparingForHome = false;
         currentState= PREPARE_COMING_HOME_FROM_RIGHT;
@@ -729,7 +737,7 @@ void loop() {
         else if ((modus=1)|(modus=2)|(modus=4)){    //wenn er ganz normal losfahren soll
         currentState=MOVING_FORWARD;
       }
-      moveForward();
+      moveForward(sensorValue);
       aktuelly++;
       if(modus == 3 && aktuelly >= yabgemessen) {
         aktuelly = 0;
@@ -746,7 +754,7 @@ void loop() {
       break;
 
     case MOVING_START_FORWARD2:
-      moveForward();
+      moveForward(sensorValue);
       aktuellx++;
       if((modus == 3 && aktuellx >= xabgemessen/2) || (modus == 5 && aktuellx >= xabgemessen/2)) {
         currentState = TURNING_LEFT_START;
@@ -761,7 +769,7 @@ void loop() {
   
 
     case MOVING_FORWARD:
-      moveForward(); // Bewege dich vorwärts
+      moveForward(sensorValue); // Bewege dich vorwärts
       aktuelly+=1;
       richtung = "oben";
       if (((sensorValue == HIGH)&(turnLeftNext))|((turnLeftNext)&((aktuelly==yabgemessen/2)&((modus==2)|(modus==3))))) { // Wenn der Sensor 1 ausgibt
