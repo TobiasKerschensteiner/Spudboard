@@ -67,18 +67,16 @@ bool isCalibratingY = false;
 
 
 //Standard
-enum State {MOVING_FORWARDcalib,
-            TURNING_RIGHTcalib,MOVING_FORWARD2calib,
-            MOVING_START_FORWARD, TURNING_RIGHT_START,MOVING_START_FORWARD2, TURNING_LEFT_START,
-            MOVING_FORWARD,TURNING_RIGHT, TURNING_RIGHT2,
+enum State {
+            CHECK_BUTTON,MOVING_FORWARD,TURNING_RIGHT, TURNING_RIGHT2,
             MOVING_SHORT_DISTANCER, MOVING_SHORT_DISTANCEL,
             TURNING_LEFT, TURNING_LEFT2,
             STOPPINGUR, HOMEUR, STOPPINGOR, HOMEOR,
             PREPARE_COMING_HOME_FROM_BOTTOM,
             PREPARE_COMING_HOME_FROM_TOP,
-            PREPARE_COMING_HOME_FROM_RIGHT,ACTIVE};
+            PREPARE_COMING_HOME_FROM_RIGHT, MOVEBACK,MOVEBACK2};
             
-State currentState = MOVING_FORWARDcalib;
+State currentState = CHECK_BUTTON;
 bool hasTurnedRight = false;
 bool turnLeftNext = false; // Flag, um zu bestimmen, ob als nächstes nach links gedreht werden soll
 
@@ -126,6 +124,7 @@ int startMinutes = 1;  // Startminuten für den Countdown
 int startSeconds = 30;  // Startsekunden für den Countdown
 int totalSeconds = startMinutes * 60 + startSeconds;  // Gesamtzeit des Countdowns in Sekunden
 int remainingSeconds = totalSeconds;  // Verbleibende Zeit des Countdowns in Sekunden
+int elapsedSeconds =0 ;
 
 bool isCharging = true; // Setzen Sie diese Variable entsprechend dem Ladezustand des Akkus
 bool isWifiConnected = true; // setzten endprechen ob mit WLAn verbunden oder nicht 
@@ -646,19 +645,20 @@ void drawFilledSegment(int centerX, int centerY, int radius, float startAngle, f
     float angleRad = angle * DEG_TO_RAD; // Umrechnung in Radiant
     float nextAngleRad = (angle + segmentSize) * DEG_TO_RAD;
 
+    // Berechne die Koordinaten der Eckpunkte des Segments
     int x1 = centerX + radius * cos(angleRad);
     int y1 = centerY + radius * sin(angleRad);
     int x2 = centerX + radius * cos(nextAngleRad);
     int y2 = centerY + radius * sin(nextAngleRad);
 
-    tft.fillTriangle(centerX, centerY, x1, y1, x2, y2, color);
+        tft.fillTriangle(centerX, centerY, x1, y1, x2, y2, color);
   }
 }
 
 // Funktion zur Aktualisierung der Timer-Anzeige
 void updateTimerDisplay() {
   tft.setTextSize(4);
-
+  
   // Berechne den Winkel basierend auf der verstrichenen Zeit
   float angle = 360.0 * (float)elapsedSeconds / 60.0; // 60.0 für eine volle Minute
 
@@ -691,7 +691,7 @@ void time() {
 
     if (elapsedSeconds >= 60) { // Wenn eine Minute erreicht ist, halte den Timer an
       // Optional: Füge hier Code ein, um etwas zu tun, wenn der Timer eine Minute erreicht
-    }
+    } 
   }
 }
 
@@ -907,7 +907,7 @@ void stopMotors() {
 //comming home von oben rechts
 void homeor() {
   int sensorValue = digitalRead(sensorPin);
-    if (isPreparingForHome) {
+    if (isPreparingForHome== true) {
         // Überspringe den ersten Case, gehe direkt zu MOVING_FORWARD2_HOME
         homeState2 = MOVING_FORWARD2_HOME;
         isPreparingForHome = false; // Zurücksetzen des Flags
@@ -944,7 +944,7 @@ void homeor() {
 
     case STOPPING_HOME2:
       stopMotors();
-      currentState = ACTIVE;
+      currentState = CHECK_BUTTON;
       break;
 
   }
@@ -1080,20 +1080,47 @@ void loop() {
   int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
   digitalWrite(wisch,HIGH); // wisch soll an gehen 
+ int taster2state = digitalRead(taster2); // Lesen Sie den Zustand der Taste
+  int lastButtonState = LOW; // Speichert den letzten Zustand des Buttons
+
+  if(turnLeftNext){
+    richtung= "unten";
+    }
+    else{
+    richtung="oben";
+    }
 
   switch (currentState) {
     
- switch (currentState) {
+    case CHECK_BUTTON:
+        if (taster2state  == HIGH && lastButtonState == LOW) {
+    // Der Button wurde gerade gedrückt
+        roboterInBetrieb = !roboterInBetrieb; // Wechseln Sie den Betriebszustand des Roboters
+        }
+
+        currentState = MOVING_FORWARD; // Wechseln Sie den Zustand zu MOVING_FORWARD
+      lastButtonState = taster2state; 
+      break;
+
     case MOVING_FORWARD:
       moveForward(); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         if (turnLeftNext) {
-          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
+          currentState = MOVEBACK2; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
         } else {
-          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+          currentState = MOVEBACK; // Wechsle den Zustand zu Rechtsabbiegung
         }
       }
+      break;
+    case MOVEBACK:
+      moveShortDistance(-dist/2);
+      currentState = TURNING_RIGHT;
+      break;
+
+    case MOVEBACK2:
+      moveShortDistance(-dist/2);
+      currentState = TURNING_LEFT;
       break;
 
     case TURNING_RIGHT:
@@ -1106,6 +1133,7 @@ void loop() {
       break;
 
     case MOVING_SHORT_DISTANCER:
+      richtung = "rechts";
       moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
       if (digitalRead(sensorPin) == HIGH) {
         currentState = STOPPINGOR;
@@ -1158,6 +1186,7 @@ void loop() {
     homeur();
     break;
 
+
     case STOPPINGOR:
       stopMotors();
       delay(2000);
@@ -1168,6 +1197,29 @@ void loop() {
     case HOMEOR:
     homeor();
     break;
- }
+
+    case PREPARE_COMING_HOME_FROM_TOP:
+        turnLeft(); // Drehe nach links
+        currentState = HOMEOR;
+        break;
+
+    case PREPARE_COMING_HOME_FROM_BOTTOM:
+        turnRight();
+        currentState = HOMEOR;
+        break;
+
   }
+  if (digitalRead(taster2) == HIGH) {
+    // Entscheidung basierend auf der aktuellen Richtung
+    if (richtung == "unten") {
+      isPreparingForHome = true;
+      currentState =  STOPPINGOR;
+    } else if (richtung == "oben") {
+      isPreparingForHome = true;
+      currentState =  STOPPINGOR;
+    } else if (richtung == "rechts") {
+      currentState = STOPPINGOR;
+    }}
+    // Verhindere weitere Aktionen in diesem Durchlauf
+    return;
 }
