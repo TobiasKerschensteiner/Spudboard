@@ -1023,12 +1023,10 @@ void loop() {
       tft.setRotation(3);
     } else if (mpu.getAngleX() < -45) { // Neigung nach oben
       tft.setRotation(1);
-    } else if (mpu.getAngleY() > 45) { // Neigung nach rechts
-      tft.setRotation(0);
-    } else if (mpu.getAngleY() < -45) { // Neigung nach links
-      tft.setRotation(2);
-    }
+    } 
+      tft.setRotation(0); // Keine Drehung, beibehalten der Standardausrichtung
   }
+  
 
 //Display Anzeige
   if(isCharging) {
