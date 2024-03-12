@@ -1116,17 +1116,18 @@ void loop() {
     case MOVING_FORWARD:
       moveForward(); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
-        if (turnLeftNext) {
-          currentState = MOVEBACK2; // Wechsle den Zustand zu Linksabbiegung
-          turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
-        } else {
           currentState = MOVEBACK; // Wechsle den Zustand zu Rechtsabbiegung
         }
       }
       break;
     case MOVEBACK:
       moveShortDistanceback(bist);
-      currentState = TURNING_RIGHT;
+      if (turnLeftNext) {
+          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
+          turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
+        } else {
+          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+        }
       break;
 
     case MOVEBACK2:
