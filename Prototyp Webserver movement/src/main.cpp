@@ -879,11 +879,6 @@ void turnleft180()
 
 //Roboter bewegt sich vorwärts
 void moveForward() {
-  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
-  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
-  stepper2.setMaxSpeed(maxspeeddre);
-  stepper2.setAcceleration(besch);
-
   stepper1.setSpeed(desiredSpeed);
   stepper2.setSpeed(desiredSpeed);
   stepper1.runSpeed();
@@ -1109,10 +1104,14 @@ void loop() {
       break;
 
       case MOVEBACK:
-    moveShortDistanceback(-bist);
-    currentState = turnLeftNext ? TURNING_LEFT : TURNING_RIGHT;
-    turnLeftNext = !turnLeftNext; // Wechsle die Richtung für das nächste Mal
-    break;
+      moveShortDistanceback(bist);
+        if (turnLeftNext) {
+          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
+          turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
+        } else {
+          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+        }
+        break;
 
 
     case TURNING_RIGHT:
