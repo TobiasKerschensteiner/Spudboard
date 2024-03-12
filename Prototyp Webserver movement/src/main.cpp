@@ -1109,14 +1109,10 @@ void loop() {
       break;
 
       case MOVEBACK:
-      moveShortDistanceback(bist);
-        if (turnLeftNext) {
-          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
-          turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
-        } else {
-          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
-        }
-        break;
+    moveShortDistanceback(-bist);
+    currentState = turnLeftNext ? TURNING_LEFT : TURNING_RIGHT;
+    turnLeftNext = !turnLeftNext; // Wechsle die Richtung für das nächste Mal
+    break;
 
 
     case TURNING_RIGHT:
