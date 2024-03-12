@@ -911,8 +911,8 @@ void moveShortDistanceback(int steps) {
   stepper2.setMaxSpeed(maxspeeddre);
   stepper2.setAcceleration(besch);
 
-  stepper1.move(steps);
-  stepper2.move(steps);
+  stepper1.move(-steps);
+  stepper2.move(-steps);
 
   while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
     stepper1.run();
@@ -1109,7 +1109,7 @@ void loop() {
       break;
 
       case MOVEBACK:
-      moveShortDistanceback();
+      moveShortDistanceback(bist);
         if (turnLeftNext) {
           currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
