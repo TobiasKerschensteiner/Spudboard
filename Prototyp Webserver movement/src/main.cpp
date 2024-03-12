@@ -687,7 +687,7 @@ void time() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     elapsedSeconds++;  // Inkrementiere die verstrichene Zeit jede Sekunde
-    updateTimerDisplay();  // Aktualisiere die Anzeige
+    //updateTimerDisplay();  // Aktualisiere die Anzeige
 
     if (elapsedSeconds >= 60) {
       elapsedSeconds = 0;  // Setze die Sekunden zurück, wenn eine Minute erreicht ist
@@ -1032,7 +1032,7 @@ void homeur() {
 
 
 void loop() {
-
+  time();
   fahren();
 
 //Webserver Input
