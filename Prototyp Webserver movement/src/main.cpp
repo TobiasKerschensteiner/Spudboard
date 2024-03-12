@@ -38,8 +38,8 @@ const int delays = 2000; //delay von 2 sek
 const int dist = 20000; //Kleiner versatzt von 1000 schritten 
 const int Enable = 18;
 // Pinbelegung Sonstige
-const int taster1 = 13; //Taster stoppen 
-const int taster2 = 32; // Taster Standardroute
+const int taster2 = 13; //Taster stoppen 
+const int taster1 = 32; // Taster Standardroute
 const int sensorPin = 23; // Pin-Nummer des Sensors
 const int wisch = 19; // Pin-Nummer wischmodul
 const int BL = 12; // Backlight Display
@@ -1007,7 +1007,6 @@ void homeur() {
 
 
 void loop() {
-  mpu.update();
 
   if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
     Serial.print("X : ");
@@ -1017,6 +1016,7 @@ void loop() {
     Serial.print("\tZ : ");
     Serial.println(mpu.getAngleZ());
     timer = millis();
+    mpu.update();
 
     // Rotation des Displays anpassen basierend auf der X-Achsen Neigung
     if (mpu.getAngleX() > 45) { // Neigung nach unten
@@ -1089,11 +1089,13 @@ void loop() {
     else{
     richtung="oben";
     }
-
+  Serial.println("switch currentState");
   switch (currentState) {
     
     case CHECK_BUTTON:
+        Serial.println("CHECK_BUTTON");
         if (taster2state  == HIGH && lastButtonState == LOW) {
+          Serial.println("taster2if");
     // Der Button wurde gerade gedrückt
         roboterInBetrieb = !roboterInBetrieb; // Wechseln Sie den Betriebszustand des Roboters
         }
