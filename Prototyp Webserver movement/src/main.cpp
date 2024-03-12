@@ -886,6 +886,11 @@ void moveForward() {
 
 //Roboter fährt einen kleinen versatzt von 1000 schritte
 void moveShortDistance(int steps) {
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+
   stepper1.move(steps);
   stepper2.move(steps);
   while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
@@ -1239,4 +1244,3 @@ void loop() {
   //     currentState = STOPPINGOR;
   // }
    }
-}
