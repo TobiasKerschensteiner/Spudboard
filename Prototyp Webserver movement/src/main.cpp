@@ -878,6 +878,11 @@ void turnleft180()
 
 //Roboter bewegt sich vorwärts
 void moveForward() {
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+
   stepper1.setSpeed(desiredSpeed);
   stepper2.setSpeed(desiredSpeed);
   stepper1.runSpeed();
