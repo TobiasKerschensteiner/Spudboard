@@ -1104,24 +1104,20 @@ void loop() {
     case MOVING_FORWARD:
       moveForward(); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
-          currentState = MOVEBACK; // Wechsle den Zustand zu Rechtsabbiegung
-        }
+      currentState = MOVEBACK;
       }
       break;
-    case MOVEBACK:
-      moveShortDistanceback(-bist);
-      if (turnLeftNext) {
+
+      case MOVEBACK:
+      moveShortDistanceback();
+        if (turnLeftNext) {
           currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
         } else {
           currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
         }
-      break;
+        break;
 
-    case MOVEBACK2:
-      moveShortDistanceback(-bist);
-      currentState = TURNING_LEFT;
-      break;
 
     case TURNING_RIGHT:
       turnRight(); // Führe eine Rechtsabbiegung aus
@@ -1133,7 +1129,6 @@ void loop() {
       break;
 
     case MOVING_SHORT_DISTANCER:
-      // richtung = "rechts";
       moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
       if (digitalRead(sensorPin) == HIGH) {
         currentState = STOPPINGOR;
@@ -1186,7 +1181,6 @@ void loop() {
     homeur();
     break;
 
-
     case STOPPINGOR:
       stopMotors();
       delay(2000);
@@ -1197,6 +1191,8 @@ void loop() {
     case HOMEOR:
     homeor();
     break;
+
+  }
 
   //   case PREPARE_COMING_HOME_FROM_TOP:
   //       turnLeft(); // Drehe nach links
