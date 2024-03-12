@@ -1038,35 +1038,6 @@ void homeur() {
 
 void loop() {
 
-  if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
-    //Serial.print("Z : ");
-    //Serial.println(mpu.getAngleZ());
-    timer = millis();
-    mpu.update();
-
-    // Rotation des Displays anpassen basierend auf der Z-Achsen Neigung
-    if (mpu.getAngleZ() < -45) { // Neigung nach rechts
-      tft.setRotation(0); // Hier könntest du die Ausrichtung anpassen, z.B. keine Drehung
-    } else if (mpu.getAngleZ() > 45) { // Neigung nach links
-      tft.setRotation(2); // Hier könntest du die Ausrichtung anpassen, z.B. 180 Grad Drehung
-    } else {
-      // Wenn die Neigung innerhalb des Bereichs -45 bis 45 Grad liegt, könnte die Standardausrichtung beibehalten werden
-      tft.setRotation(1); // Beibehalten der Standardausrichtung oder einer anderen festen Rotation
-    }
-  }
-
-
-//Display Anzeige
-  if(isCharging) {
-    laden();
-  }
-  if(kalib) {
-    //drawSmileyThinking();
-  }
-  else {
-    fahren();
-  }
-
 //Webserver Input
     static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
     const long interval = 100; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
@@ -1249,4 +1220,34 @@ void loop() {
   //   } else if (richtung == "rechts") {
   //     currentState = STOPPINGOR;
   // }
+
+  
+  if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
+    //Serial.print("Z : ");
+    //Serial.println(mpu.getAngleZ());
+    timer = millis();
+    mpu.update();
+
+    // Rotation des Displays anpassen basierend auf der Z-Achsen Neigung
+    if (mpu.getAngleZ() < -45) { // Neigung nach rechts
+      tft.setRotation(0); // Hier könntest du die Ausrichtung anpassen, z.B. keine Drehung
+    } else if (mpu.getAngleZ() > 45) { // Neigung nach links
+      tft.setRotation(2); // Hier könntest du die Ausrichtung anpassen, z.B. 180 Grad Drehung
+    } else {
+      // Wenn die Neigung innerhalb des Bereichs -45 bis 45 Grad liegt, könnte die Standardausrichtung beibehalten werden
+      tft.setRotation(1); // Beibehalten der Standardausrichtung oder einer anderen festen Rotation
+    }
+  }
+
+
+//Display Anzeige
+  if(isCharging) {
+    laden();
+  }
+  if(kalib) {
+    //drawSmileyThinking();
+  }
+  else {
+    fahren();
+  }
    }
