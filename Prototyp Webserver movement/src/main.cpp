@@ -944,7 +944,7 @@ void homeor() {
 
     case STOPPING_HOME2:
       stopMotors();
-      currentState = MOVING_FORWARD;
+      // currentState = MOVING_FORWARD;
       break;
 
   }
@@ -1077,7 +1077,7 @@ void loop() {
 
   digitalWrite(wisch,HIGH); // wisch soll an gehen 
 //  int taster2state = digitalRead(taster2); // Lesen Sie den Zustand der Taste
-  int lastButtonState = LOW; // Speichert den letzten Zustand des Buttons
+  // int lastButtonState = LOW; // Speichert den letzten Zustand des Buttons
 
   // if(turnLeftNext){
   //   richtung= "unten";
@@ -1104,22 +1104,22 @@ void loop() {
       moveForward(); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         if (turnLeftNext) {
-          currentState = MOVEBACK2; // Wechsle den Zustand zu Linksabbiegung
+          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
         } else {
-          currentState = MOVEBACK; // Wechsle den Zustand zu Rechtsabbiegung
+          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
         }
       }
       break;
-    case MOVEBACK:
-      moveShortDistance(-dist/2);
-      currentState = TURNING_RIGHT;
-      break;
+    // case MOVEBACK:
+    //   moveShortDistance(-dist/2);
+    //   currentState = TURNING_RIGHT;
+    //   break;
 
-    case MOVEBACK2:
-      moveShortDistance(-dist/2);
-      currentState = TURNING_LEFT;
-      break;
+    // case MOVEBACK2:
+    //   moveShortDistance(-dist/2);
+    //   currentState = TURNING_LEFT;
+    //   break;
 
     case TURNING_RIGHT:
       turnRight(); // Führe eine Rechtsabbiegung aus
@@ -1131,7 +1131,7 @@ void loop() {
       break;
 
     case MOVING_SHORT_DISTANCER:
-      richtung = "rechts";
+      // richtung = "rechts";
       moveShortDistance(dist); // Bewege dich eine kurze Strecke vorwärts
       if (digitalRead(sensorPin) == HIGH) {
         currentState = STOPPINGOR;
@@ -1219,6 +1219,4 @@ void loop() {
   //     currentState = STOPPINGOR;
   // }
    }
-  //   // Verhindere weitere Aktionen in diesem Durchlauf
-    return;
 }
