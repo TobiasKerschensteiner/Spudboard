@@ -895,8 +895,14 @@ void moveShortDistance(int steps) {
 }
 
 void moveShortDistanceback(int steps) {
-  stepper1.move(-steps);
-  stepper2.move(-steps);
+  stepper1.setMaxSpeed(maxspeeddre); // Erhöhe die Geschwindigkeit für die Drehung
+  stepper1.setAcceleration(besch); // Erhöhe die Beschleunigung für eine schnellere Anlaufzeit
+  stepper2.setMaxSpeed(maxspeeddre);
+  stepper2.setAcceleration(besch);
+
+  stepper1.move(steps);
+  stepper2.move(steps);
+
   while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
     stepper1.run();
     stepper2.run();
@@ -1121,7 +1127,7 @@ void loop() {
       }
       break;
     case MOVEBACK:
-      moveShortDistanceback(bist);
+      moveShortDistanceback(-bist);
       if (turnLeftNext) {
           currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
@@ -1131,7 +1137,7 @@ void loop() {
       break;
 
     case MOVEBACK2:
-      moveShortDistanceback(bist);
+      moveShortDistanceback(-bist);
       currentState = TURNING_LEFT;
       break;
 
