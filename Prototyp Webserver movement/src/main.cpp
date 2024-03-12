@@ -76,7 +76,7 @@ enum State {
             PREPARE_COMING_HOME_FROM_TOP,
             PREPARE_COMING_HOME_FROM_RIGHT, MOVEBACK,MOVEBACK2};
             
-State currentState = CHECK_BUTTON;
+State currentState = MOVING_FORWARD;
 bool hasTurnedRight = false;
 bool turnLeftNext = false; // Flag, um zu bestimmen, ob als nächstes nach links gedreht werden soll
 
@@ -907,11 +907,11 @@ void stopMotors() {
 //comming home von oben rechts
 void homeor() {
   int sensorValue = digitalRead(sensorPin);
-    if (isPreparingForHome== true) {
-        // Überspringe den ersten Case, gehe direkt zu MOVING_FORWARD2_HOME
-        homeState2 = MOVING_FORWARD2_HOME;
-        isPreparingForHome = false; // Zurücksetzen des Flags
-    }
+    // if (isPreparingForHome== true) {
+    //     // Überspringe den ersten Case, gehe direkt zu MOVING_FORWARD2_HOME
+    //     homeState2 = MOVING_FORWARD2_HOME;
+    //     isPreparingForHome = false; // Zurücksetzen des Flags
+    // }
   switch(homeState2) {
     case TURNING_LEFT2_HOME:
     turnleft180();
@@ -944,7 +944,7 @@ void homeor() {
 
     case STOPPING_HOME2:
       stopMotors();
-      currentState = CHECK_BUTTON;
+      currentState = MOVING_FORWARD;
       break;
 
   }
@@ -1076,29 +1076,29 @@ void loop() {
   int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
   digitalWrite(wisch,HIGH); // wisch soll an gehen 
- int taster2state = digitalRead(taster2); // Lesen Sie den Zustand der Taste
+//  int taster2state = digitalRead(taster2); // Lesen Sie den Zustand der Taste
   int lastButtonState = LOW; // Speichert den letzten Zustand des Buttons
 
-  if(turnLeftNext){
-    richtung= "unten";
-    }
-    else{
-    richtung="oben";
-    }
+  // if(turnLeftNext){
+  //   richtung= "unten";
+  //   }
+  //   else{
+  //   richtung="oben";
+  //   }
   //Serial.println("switch currentState");
   switch (currentState) {
     
-    case CHECK_BUTTON:
-        //Serial.println("CHECK_BUTTON");
-        if (taster2state  == HIGH && lastButtonState == LOW) {
-          //Serial.println("taster2if");
-    // Der Button wurde gerade gedrückt
-        roboterInBetrieb = !roboterInBetrieb; // Wechseln Sie den Betriebszustand des Roboters
-        }
+    // case CHECK_BUTTON:
+    //     //Serial.println("CHECK_BUTTON");
+    //     if (taster2state  == HIGH && lastButtonState == LOW) {
+    //       //Serial.println("taster2if");
+    // // Der Button wurde gerade gedrückt
+    //     roboterInBetrieb = !roboterInBetrieb; // Wechseln Sie den Betriebszustand des Roboters
+    //     }
 
-        currentState = MOVING_FORWARD; // Wechseln Sie den Zustand zu MOVING_FORWARD
-      lastButtonState = taster2state; 
-      break;
+    //     currentState = MOVING_FORWARD; // Wechseln Sie den Zustand zu MOVING_FORWARD
+    //   lastButtonState = taster2state; 
+    //   break;
 
     case MOVING_FORWARD:
       moveForward(); // Bewege dich vorwärts
@@ -1196,28 +1196,28 @@ void loop() {
     homeor();
     break;
 
-    case PREPARE_COMING_HOME_FROM_TOP:
-        turnLeft(); // Drehe nach links
-        currentState = HOMEOR;
-        break;
+  //   case PREPARE_COMING_HOME_FROM_TOP:
+  //       turnLeft(); // Drehe nach links
+  //       currentState = HOMEOR;
+  //       break;
 
-    case PREPARE_COMING_HOME_FROM_BOTTOM:
-        turnRight();
-        currentState = HOMEOR;
-        break;
+  //   case PREPARE_COMING_HOME_FROM_BOTTOM:
+  //       turnRight();
+  //       currentState = HOMEOR;
+  //       break;
 
-  }
-  if (digitalRead(taster2) == HIGH) {
-    // Entscheidung basierend auf der aktuellen Richtung
-    if (richtung == "unten") {
-      isPreparingForHome = true;
-      currentState =  STOPPINGOR;
-    } else if (richtung == "oben") {
-      isPreparingForHome = true;
-      currentState =  STOPPINGOR;
-    } else if (richtung == "rechts") {
-      currentState = STOPPINGOR;
-    }}
-    // Verhindere weitere Aktionen in diesem Durchlauf
+  // }
+  // if (digitalRead(taster2) == HIGH) {
+  //   // Entscheidung basierend auf der aktuellen Richtung
+  //   if (richtung == "unten") {
+  //     isPreparingForHome = true;
+  //     currentState =  STOPPINGOR;
+  //   } else if (richtung == "oben") {
+  //     isPreparingForHome = true;
+  //     currentState =  STOPPINGOR;
+  //   } else if (richtung == "rechts") {
+  //     currentState = STOPPINGOR;
+  //   }}
+  //   // Verhindere weitere Aktionen in diesem Durchlauf
     return;
 }
