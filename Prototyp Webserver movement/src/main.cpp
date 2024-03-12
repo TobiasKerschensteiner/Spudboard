@@ -35,7 +35,8 @@ const int maxspeeddre = 10000; //Maximale Geschwindikeit bei den Drehungen
 const int besch = 4000; // Beschleunigung
 const int desiredSpeed = 10000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
 const int delays = 2000; //delay von 2 sek
-const int dist = 20000; //Kleiner versatzt von 1000 schritten 
+const int dist = 20000; //Kleiner versatzt von 1000 schritten
+const int bist = -10000; 
 const int Enable = 18;
 // Pinbelegung Sonstige
 const int taster2 = 13; //Taster stoppen 
@@ -913,6 +914,7 @@ void homeor() {
     //     isPreparingForHome = false; // Zurücksetzen des Flags
     // }
   switch(homeState2) {
+
     case TURNING_LEFT2_HOME:
     turnleft180();
     homeState2 = MOVING_FORWARD2_HOME;
@@ -956,6 +958,8 @@ void homeur() {
   int sensorValue = digitalRead(sensorPin); // Lese den Sensorwert
 
   switch (homeState) {
+
+
     case TURNING_LEFT_HOME:
       turnLeft(); // Führe eine Linksdrehung aus
       homeState = MOVING_FORWARD_HOME; // Wechsle den Zustand zu vorwärts bewegen
@@ -1104,22 +1108,22 @@ void loop() {
       moveForward(); // Bewege dich vorwärts
       if (sensorValue == HIGH) { // Wenn der Sensor 1 ausgibt
         if (turnLeftNext) {
-          currentState = TURNING_LEFT; // Wechsle den Zustand zu Linksabbiegung
+          currentState = MOVEBACK2; // Wechsle den Zustand zu Linksabbiegung
           turnLeftNext = false; // Setze zurück, damit das nächste Abbiegen wieder rechts ist
         } else {
-          currentState = TURNING_RIGHT; // Wechsle den Zustand zu Rechtsabbiegung
+          currentState = MOVEBACK; // Wechsle den Zustand zu Rechtsabbiegung
         }
       }
       break;
-    // case MOVEBACK:
-    //   moveShortDistance(-dist/2);
-    //   currentState = TURNING_RIGHT;
-    //   break;
+    case MOVEBACK:
+      moveShortDistance(bist);
+      currentState = TURNING_RIGHT;
+      break;
 
-    // case MOVEBACK2:
-    //   moveShortDistance(-dist/2);
-    //   currentState = TURNING_LEFT;
-    //   break;
+    case MOVEBACK2:
+      moveShortDistance(bist);
+      currentState = TURNING_LEFT;
+      break;
 
     case TURNING_RIGHT:
       turnRight(); // Führe eine Rechtsabbiegung aus
