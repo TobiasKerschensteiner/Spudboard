@@ -138,7 +138,7 @@ void getBattery()
 
   akkustand = map(Voltage,2950,4095,0,100);
   akkustand = akkustand/100;
-  Serial.println(akkustand);
+  //Serial.println(akkustand);
 
   if (akkustand >= 100)
   {
@@ -1009,8 +1009,8 @@ void homeur() {
 void loop() {
 
   if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
-    Serial.print("Z : ");
-    Serial.println(mpu.getAngleZ());
+    //Serial.print("Z : ");
+    //Serial.println(mpu.getAngleZ());
     timer = millis();
     mpu.update();
 
@@ -1085,13 +1085,13 @@ void loop() {
     else{
     richtung="oben";
     }
-  Serial.println("switch currentState");
+  //Serial.println("switch currentState");
   switch (currentState) {
     
     case CHECK_BUTTON:
-        Serial.println("CHECK_BUTTON");
+        //Serial.println("CHECK_BUTTON");
         if (taster2state  == HIGH && lastButtonState == LOW) {
-          Serial.println("taster2if");
+          //Serial.println("taster2if");
     // Der Button wurde gerade gedrückt
         roboterInBetrieb = !roboterInBetrieb; // Wechseln Sie den Betriebszustand des Roboters
         }
