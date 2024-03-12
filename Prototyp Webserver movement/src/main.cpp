@@ -686,13 +686,13 @@ void time() {
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
+    elapsedSeconds++;  // Inkrementiere die verstrichene Zeit jede Sekunde
+    updateTimerDisplay();  // Aktualisiere die Anzeige
 
-    elapsedSeconds++; // Inkrementiere die verstrichene Zeit jede Sekunde
-    updateTimerDisplay(); // Aktualisiere die Anzeige
-
-    if (elapsedSeconds >= 60) { // Wenn eine Minute erreicht ist, halte den Timer an
-      // Optional: Füge hier Code ein, um etwas zu tun, wenn der Timer eine Minute erreicht
-    } 
+    if (elapsedSeconds >= 60) {
+      elapsedSeconds = 0;  // Setze die Sekunden zurück, wenn eine Minute erreicht ist
+      // Optional: Code zum Inkrementieren der Minuten und Aktualisieren der Anzeige
+    }
   }
 }
 
@@ -1236,9 +1236,6 @@ void loop() {
 //Display Anzeige
   if(isCharging) {
     laden();
-  }
-  if(kalib) {
-    //drawSmileyThinking();
   }
   else {
     fahren();
