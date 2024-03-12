@@ -789,6 +789,7 @@ void setup(void) {
   tft.setTextSize(4);
   tft.setRotation(1);
   tft.fillScreen(TFT_BLACK);
+
   // Initialisiere die Motoren mit der gewünschten Geschwindigkeit
   stepper1.setMaxSpeed(maxSpeed);
   stepper1.setSpeed(desiredSpeed);
@@ -1037,6 +1038,8 @@ void homeur() {
 
 void loop() {
 
+  fahren();
+
   if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
     //Serial.print("Z : ");
     //Serial.println(mpu.getAngleZ());
@@ -1054,7 +1057,7 @@ void loop() {
     }
   }
 
-
+/*
 //Display Anzeige
   if(isCharging) {
     laden();
@@ -1064,7 +1067,7 @@ void loop() {
   }
   else {
     fahren();
-  }
+  }*/
 
 //Webserver Input
     static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
