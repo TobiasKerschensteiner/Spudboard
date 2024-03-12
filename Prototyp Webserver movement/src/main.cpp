@@ -36,7 +36,7 @@ const int besch = 4000; // Beschleunigung
 const int desiredSpeed = 10000; // Gewünschte Geschwindigkeit in Schritten pro Sekunde
 const int delays = 2000; //delay von 2 sek
 const int dist = 20000; //Kleiner versatzt von 1000 schritten
-const int bist = -10000; 
+const int bist = 10000; 
 const int Enable = 18;
 // Pinbelegung Sonstige
 const int taster2 = 13; //Taster stoppen 
@@ -75,7 +75,7 @@ enum State {
             STOPPINGUR, HOMEUR, STOPPINGOR, HOMEOR,
             PREPARE_COMING_HOME_FROM_BOTTOM,
             PREPARE_COMING_HOME_FROM_TOP,
-            PREPARE_COMING_HOME_FROM_RIGHT, MOVEBACK,MOVEBACK2};
+            PREPARE_COMING_HOME_FROM_RIGHT, MOVEBACK, MOVEBACK2};
             
 State currentState = MOVING_FORWARD;
 bool hasTurnedRight = false;
@@ -894,6 +894,15 @@ void moveShortDistance(int steps) {
   }
 }
 
+void moveShortDistanceback(int steps) {
+  stepper1.move(-steps);
+  stepper2.move(-steps);
+  while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
+    stepper1.run();
+    stepper2.run();
+  }
+}
+
 //Motoren Stoppen
 void stopMotors() {
   stepper1.stop(); // Stoppe Stepper 1
@@ -1116,12 +1125,12 @@ void loop() {
       }
       break;
     case MOVEBACK:
-      moveShortDistance(bist);
+      moveShortDistanceback(bist);
       currentState = TURNING_RIGHT;
       break;
 
     case MOVEBACK2:
-      moveShortDistance(bist);
+      moveShortDistanceback(bist);
       currentState = TURNING_LEFT;
       break;
 
