@@ -1010,25 +1010,21 @@ void loop() {
   mpu.update();
 
   if ((millis() - timer) > 10) {  // Daten alle 10ms ausgeben
-    Serial.print("X : ");
-    Serial.print(mpu.getAngleX());
-    Serial.print("\tY : ");
-    Serial.print(mpu.getAngleY());
-    Serial.print("\tZ : ");
+    Serial.print("Z : ");
     Serial.println(mpu.getAngleZ());
     timer = millis();
 
-    // Rotation des Displays anpassen basierend auf der X-Achsen Neigung
-    if (mpu.getAngleX() > 45) { // Neigung nach unten
-      tft.setRotation(3);
-    } else if (mpu.getAngleX() < -45) { // Neigung nach oben
-      tft.setRotation(1);
-    } else if (mpu.getAngleY() > 45) { // Neigung nach rechts
-      tft.setRotation(0);
-    } else if (mpu.getAngleY() < -45) { // Neigung nach links
-      tft.setRotation(2);
+    // Rotation des Displays anpassen basierend auf der Z-Achsen Neigung
+    if (mpu.getAngleZ() < -45) { // Neigung nach rechts
+      tft.setRotation(0); // Hier könntest du die Ausrichtung anpassen, z.B. keine Drehung
+    } else if (mpu.getAngleZ() > 45) { // Neigung nach links
+      tft.setRotation(2); // Hier könntest du die Ausrichtung anpassen, z.B. 180 Grad Drehung
+    } else {
+      // Wenn die Neigung innerhalb des Bereichs -45 bis 45 Grad liegt, könnte die Standardausrichtung beibehalten werden
+      tft.setRotation(1); // Beibehalten der Standardausrichtung oder einer anderen festen Rotation
     }
   }
+
 
 //Display Anzeige
   if(isCharging) {
