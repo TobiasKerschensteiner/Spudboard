@@ -1217,7 +1217,7 @@ void loop() {
   //     currentState =  STOPPINGOR;
   //   } else if (richtung == "rechts") {
   //     currentState = STOPPINGOR;
-  //   }}
+   }
   //   // Verhindere weitere Aktionen in diesem Durchlauf
     return;
 }
