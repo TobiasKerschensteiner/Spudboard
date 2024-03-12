@@ -1033,6 +1033,8 @@ void homeur() {
 
 void loop() {
 
+  fahren();
+
 //Webserver Input
     static unsigned long previousMillis = 0; // Speichert den letzten Zeitpunkt, zu dem der Akkustand aktualisiert wurde
     const long interval = 100; // Aktualisierungsintervall in Millisekunden (1 Sekunde)
