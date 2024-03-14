@@ -1235,12 +1235,12 @@ void loop() {
     }
   }
 
-
+/*
 //Display Anzeige
   if(isCharging) {
     laden();
   }
   else {
     fahren();
-  }
+  }*/
    }
