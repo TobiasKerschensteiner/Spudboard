@@ -136,15 +136,17 @@ bool kalib = true; // nur zum testen da um zu schauen ob die funtnkion get muss 
 void getBattery()
 {
   int Voltage = analogRead(34);
+  Serial.println(Voltage);
+  Serial.println(akkustand);
 
-  akkustand = map(Voltage,2950,4095,0,100);
+  akkustand = map(Voltage,2950,3800,0,100);
   akkustand = akkustand/100;
   //Serial.println(akkustand);
 
-  if (akkustand >= 100)
+  if (akkustand >= 1.1)
   {
     charging = 1;
-    akkustand = 100;
+    akkustand = 1;
   }
   else 
   {
@@ -687,7 +689,7 @@ void time() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     elapsedSeconds++;  // Inkrementiere die verstrichene Zeit jede Sekunde
-    updateTimerDisplay();  // Aktualisiere die Anzeige
+    //updateTimerDisplay();  // Aktualisiere die Anzeige
 
     if (elapsedSeconds >= 60) {
       elapsedSeconds = 0;  // Setze die Sekunden zurück, wenn eine Minute erreicht ist
@@ -908,6 +910,7 @@ void moveShortDistanceback(int steps) {
 
   stepper1.move(-steps);
   stepper2.move(-steps);
+  
 
   while (stepper1.distanceToGo() != 0 || stepper2.distanceToGo() != 0) {
     stepper1.run();
@@ -1032,7 +1035,7 @@ void homeur() {
 
 
 void loop() {
-
+  time();
   fahren();
 
 //Webserver Input
