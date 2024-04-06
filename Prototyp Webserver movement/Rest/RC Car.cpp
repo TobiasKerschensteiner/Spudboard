@@ -3,8 +3,8 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-const char* ssid = "Alpakhan";
-const char* password = "Bananenmus";
+const char* ssid = "iPhone von Celine";
+const char* password = "123456789";
 bool motorsRunning = false;
 
 WiFiServer server(80);

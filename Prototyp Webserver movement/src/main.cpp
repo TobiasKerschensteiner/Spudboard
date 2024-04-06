@@ -20,7 +20,7 @@ https://www.airspayce.com/mikem/arduino/AccelStepper/
 #include <MPU6050_light.h>
 
 // WLAN-Zugangsdaten
-const char* ssid = "NOTHING1";
+const char* ssid = "iPhone von Celine";
 const char* password = "123456789";
 
 //#define HALFSTEP 8
